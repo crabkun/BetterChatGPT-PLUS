@@ -1,0 +1,9 @@
+{
+  "migration": {
+    "confirmTitle": "Confirm Migration",
+    "confirmMessage": "If you are experiencing issues because your messages are in an old format, running this migration will update them to the latest format. This can help fix problems and improve your experience. Do you want to proceed?",
+    "resetVersionButton": "Reset Version and Migrate",
+    "resetVersionDescription": "This will reset the version to 8 and trigger migrations.",
+    "noPersistedState": "No saved data found. Unable to reset version."
+  }
+}

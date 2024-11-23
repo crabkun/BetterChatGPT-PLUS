@@ -30,11 +30,12 @@ export function strToTextContent(ob: string): TextContentInterface {
   };
 }
 
-export function isTextContent(ob: ContentInterface): ob is TextContentInterface {
-  return (ob as TextContentInterface).text !== undefined;
+export function isTextContent(ob: ContentInterface | undefined): ob is TextContentInterface {
+  return ob !== undefined && ob !== null && (ob as TextContentInterface).text !== undefined;
 }
-export function isImageContent(ob: ContentInterface): ob is ImageContentInterface {
-  return (ob as ImageContentInterface).image_url !== undefined;
+
+export function isImageContent(ob: ContentInterface | undefined): ob is ImageContentInterface {
+  return ob !== undefined && ob !== null && (ob as ImageContentInterface).image_url !== undefined;
 }
 
 export interface ContentInterface {

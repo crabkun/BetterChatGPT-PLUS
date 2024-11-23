@@ -23,7 +23,8 @@ import {
   ChatInterface,
   ContentInterface,
   ImageContentInterface,
-  TextContentInterface,
+  isImageContent,
+  isTextContent,
 } from '@type/chat';
 
 import { codeLanguageSubset } from '@constants/chat';
@@ -106,9 +107,9 @@ const ContentView = memo(
       setChats(updatedChats);
       handleSubmit();
     };
-
+    const currentTextContent = isTextContent(content[0]) ? content[0].text : '';
     const handleCopy = () => {
-      navigator.clipboard.writeText((content[0] as TextContentInterface).text);
+      navigator.clipboard.writeText(currentTextContent);
     };
 
     const handleImageClick = (imageUrl: string) => {
@@ -118,7 +119,9 @@ const ContentView = memo(
     const handleCloseZoom = () => {
       setZoomedImage(null);
     };
-
+    const validImageContents = Array.isArray(content)
+    ? (content.slice(1).filter(isImageContent) as ImageContentInterface[])
+    : [];
     return (
       <>
         <div className='markdown prose w-full md:max-w-full break-words dark:prose-invert dark share-gpt-message'>
@@ -146,27 +149,27 @@ const ContentView = memo(
               }}
             >
               {inlineLatex
-                ? preprocessLaTeX((content[0] as TextContentInterface).text)
-                : (content[0] as TextContentInterface).text}
+                ? preprocessLaTeX(currentTextContent)
+                : currentTextContent}
             </ReactMarkdown>
           ) : (
-            <span className='whitespace-pre-wrap'>
-              {(content[0] as TextContentInterface).text}
-            </span>
+            <span className='whitespace-pre-wrap'>{currentTextContent}</span>
           )}
         </div>
-        <div className='flex gap-4'>
-          {(content.slice(1) as ImageContentInterface[]).map((image, index) => (
-            <div key={index} className='image-container'>
-              <img
-                src={image.image_url.url}
-                alt={`uploaded-${index}`}
-                className='h-20 cursor-pointer'
-                onClick={() => handleImageClick(image.image_url.url)}
-              />
-            </div>
-          ))}
-        </div>
+        {validImageContents.length > 0 && (
+          <div className='flex gap-4'>
+            {validImageContents.map((image, index) => (
+              <div key={index} className='image-container'>
+                <img
+                  src={image.image_url.url}
+                  alt={`uploaded-${index}`}
+                  className='h-20 cursor-pointer'
+                  onClick={() => handleImageClick(image.image_url.url)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
         {zoomedImage && (
           <PopupModal
             title=''

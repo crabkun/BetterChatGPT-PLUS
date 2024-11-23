@@ -160,7 +160,7 @@ const EditView = ({
   };
   const handleSave = () => {
     const hasTextContent = (_content[0] as TextContentInterface).text !== '';
-    const hasImageContent = _content.some(
+    const hasImageContent = Array.isArray(_content) && _content.some(
       (content) => content.type === 'image_url'
     );
 
@@ -227,7 +227,7 @@ const EditView = ({
   const { handleSubmit } = useSubmit();
   const handleGenerate = () => {
     const hasTextContent = (_content[0] as TextContentInterface).text !== '';
-    const hasImageContent = _content.some(
+    const hasImageContent = Array.isArray(_content) && _content.some(
       (content) => content.type === 'image_url'
     );
 

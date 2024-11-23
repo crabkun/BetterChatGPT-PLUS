@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas';
-import { ChatInterface, ContentInterface, isTextContent } from '@type/chat';
+import { ChatInterface, ContentInterface, isImageContent, isTextContent } from '@type/chat';
 
 export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -61,13 +61,22 @@ export const chatToMarkdown = (chat: ChatInterface): string => {
 const contentToMarkdown = (contents: ContentInterface[]): string => {
   let text = '';
   contents.forEach((content) => {
-    text += isTextContent(content) ? content.text : `![image](${content.image_url.url})`;
-    text += "\n\n";
+    if (content) {
+      if (isTextContent(content)) {
+        text += content.text;
+      } else if (isImageContent(content)) {
+        text += `![image](${content.image_url.url})`;
+      }
+      text += "\n\n";
+    }
   });
   return text;
 };
 
 export const hasUnclosedCodeBlock = (text: string): boolean => {
+  if (!text) {
+    return false
+  }
   const codeBlockPattern = /```/g;
   const matches = text.match(codeBlockPattern);
   return matches ? matches.length % 2 !== 0 : false;

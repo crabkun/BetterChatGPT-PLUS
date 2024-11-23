@@ -59,8 +59,12 @@ const TokenCount = React.memo(() => {
 
   useEffect(() => {
     if (!generating) {
-      const textPrompts = messages.filter((e) => e.content.some(isTextContent));
-      const imgPrompts = messages.filter((e) => e.content.some(isImageContent));
+      const textPrompts = messages.filter(
+        (e) => Array.isArray(e.content) && e.content.some(isTextContent)
+      );
+      const imgPrompts = messages.filter(
+        (e) => Array.isArray(e.content) && e.content.some(isImageContent)
+      );
       const newPromptTokens = countTokens(textPrompts, model);
       const newImageTokens = countTokens(imgPrompts, model);
       setTokenCount(newPromptTokens);

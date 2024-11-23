@@ -105,10 +105,8 @@ const useStore = create<StoreState>()(
             migrateV7(persistedState as LocalStorageInterfaceV7oV8);
           case 8:
             migrateV8_1(persistedState as LocalStorageInterfaceV8oV8_1);
-            break;
           case 8.1:
             migrateV8_1_fix(persistedState as LocalStorageInterfaceV8_1ToV8_2);
-            break;
           case 8.2:
             migrateV8_2(persistedState as LocalStorageInterfaceV8_2ToV9);
             break;
