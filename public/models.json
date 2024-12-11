@@ -1113,7 +1113,7 @@
       "context_length": 2000000,
       "created": 1712620800,
       "description": "Google's latest multimodal model, supporting image and video in text or chat prompts.\n\nOptimized for language tasks including:\n\n- Code generation\n- Text generation\n- Text editing\n- Problem solving\n- Recommendations\n- Information extraction\n- Data extraction or generation\n- AI agents\n\nUsage of Gemini is subject to Google's [Gemini Terms of Use](https://ai.google.dev/terms).\n\n#multimodal",
-      "id": "google/gemini-pro-1.5",
+      "id": "google/gemini-2.0-flash-exp",
       "name": "Google: Gemini Pro 1.5",
       "per_request_limits": null,
       "pricing": {
@@ -1137,7 +1137,7 @@
       "context_length": 1000000,
       "created": 1722470400,
       "description": "Gemini 1.5 Pro (0827) is an experimental version of the [Gemini 1.5 Pro](/google/gemini-pro-1.5) model.\n\nUsage of Gemini is subject to Google's [Gemini Terms of Use](https://ai.google.dev/terms).\n\n#multimodal\n\nNote: This model is currently experimental and not suitable for production use-cases, and may be heavily rate-limited.",
-      "id": "google/gemini-exp-1121",
+      "id": "google/gemini-exp-1206",
       "name": "Google: Gemini Pro 1.5 Experimental",
       "per_request_limits": null,
       "pricing": {
