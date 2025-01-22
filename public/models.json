@@ -1134,10 +1134,10 @@
         "modality": "text+image->text",
         "tokenizer": "Gemini"
       },
-      "context_length": 40000,
+      "context_length": 1024000,
       "created": 1734650026,
       "description": "Gemini 2.0 Flash Thinking Mode is an experimental model that's trained to generate the \"thinking process\" the model goes through as part of its response. As a result, Thinking Mode is capable of stronger reasoning capabilities in its responses than the [base Gemini 2.0 Flash model](/google/gemini-2.0-flash-exp).",
-      "id": "google/gemini-2.0-flash-thinking-exp:free",
+      "id": "google/gemini-2.0-flash-thinking-exp-01-21",
       "name": "Google: Gemini 2.0 Flash Thinking Experimental (free)",
       "per_request_limits": null,
       "pricing": {
@@ -1147,7 +1147,7 @@
         "request": "0"
       },
       "top_provider": {
-        "context_length": 40000,
+        "context_length": 1024000,
         "is_moderated": false,
         "max_completion_tokens": 8000
       }
@@ -1161,7 +1161,7 @@
       "context_length": 40960,
       "created": 1731714740,
       "description": "Gemini 11-14 (2024) experimental model features \"quality\" improvements.",
-      "id": "google/gemini-exp-1114:free",
+      "id": "google/-1114:free",
       "name": "Google: Gemini Experimental 1114 (free)",
       "per_request_limits": null,
       "pricing": {
@@ -1185,7 +1185,7 @@
       "context_length": 40960,
       "created": 1732216725,
       "description": "Experimental release (November 21st, 2024) of Gemini.",
-      "id": "google/gemini-exp-1121:free",
+      "id": "google/-1121:free",
       "name": "Google: Gemini Experimental 1121 (free)",
       "per_request_limits": null,
       "pricing": {
@@ -1209,7 +1209,7 @@
       "context_length": 2097152,
       "created": 1733507713,
       "description": "Experimental release (December 6, 2024) of Gemini.",
-      "id": "google/gemini-exp-1206:free",
+      "id": "google/gemini-exp-1206",
       "name": "Google: Gemini Experimental 1206 (free)",
       "per_request_limits": null,
       "pricing": {
