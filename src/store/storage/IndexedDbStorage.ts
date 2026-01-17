@@ -1,7 +1,7 @@
 import { createStore, del, get, set } from 'idb-keyval';
 import { PersistStorage, StorageValue } from 'zustand/middleware';
 import { ChatInterface, MessageInterface } from '@type/chat';
-import { applyMigrations, LATEST_PERSIST_VERSION } from '../migrate';
+import { applyMigrations, ensureChatIds, LATEST_PERSIST_VERSION } from '../migrate';
 
 const DB_NAME = 'better-chatgpt-plus';
 const PERSIST_STORE = 'persist';
@@ -241,14 +241,19 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
         const migratedState = applyMigrations(parsed.state, parsedVersion) as {
           chats?: ChatInterface[];
         };
+        const normalizedChats = ensureChatIds(migratedState?.chats);
+        const normalizedState =
+          normalizedChats === migratedState?.chats
+            ? migratedState
+            : { ...migratedState, chats: normalizedChats };
         const migrated = {
           ...parsed,
-          state: migratedState,
+          state: normalizedState,
           version: LATEST_PERSIST_VERSION,
         };
         await writePersistedState(storageKey, migrated);
-        if (migratedState?.chats) {
-          await persistChatMessagesNow(migratedState.chats);
+        if (normalizedChats) {
+          await persistChatMessagesNow(normalizedChats);
         }
       } catch (error) {
         console.warn('Failed to parse localStorage state for migration.', error);

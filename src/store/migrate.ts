@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Folder,
   FolderCollection,
+  ChatInterface,
   LocalStorageInterfaceV0ToV1,
   LocalStorageInterfaceV1ToV2,
   LocalStorageInterfaceV2ToV3,
@@ -28,6 +29,17 @@ import { officialAPIEndpoint } from '@constants/auth';
 import defaultPrompts from '@constants/prompt';
 
 export const LATEST_PERSIST_VERSION = 9;
+
+export const ensureChatIds = (chats?: ChatInterface[]) => {
+  if (!chats?.length) return chats;
+  const seen = new Set<string>();
+  return chats.map((chat) => {
+    const nextId = chat.id && !seen.has(chat.id) ? chat.id : uuidv4();
+    seen.add(nextId);
+    if (nextId === chat.id) return chat;
+    return { ...chat, id: nextId };
+  });
+};
 
 export const migrateV0 = (persistedState: LocalStorageInterfaceV0ToV1) => {
   persistedState.chats.forEach((chat) => {
