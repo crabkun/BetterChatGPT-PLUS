@@ -27,6 +27,8 @@ import {
 import { officialAPIEndpoint } from '@constants/auth';
 import defaultPrompts from '@constants/prompt';
 
+export const LATEST_PERSIST_VERSION = 9;
+
 export const migrateV0 = (persistedState: LocalStorageInterfaceV0ToV1) => {
   persistedState.chats.forEach((chat) => {
     chat.titleSet = false;
@@ -134,4 +136,33 @@ export const migrateV8_2 = (persistedState: LocalStorageInterfaceV8_2ToV9) => {
   persistedState.chats.forEach((chat) => {
     if (chat.imageDetail == undefined) chat.imageDetail = _defaultImageDetail
   });
+};
+
+export const applyMigrations = (persistedState: unknown, version: number) => {
+  switch (version) {
+    case 0:
+      migrateV0(persistedState as LocalStorageInterfaceV0ToV1);
+    case 1:
+      migrateV1(persistedState as LocalStorageInterfaceV1ToV2);
+    case 2:
+      migrateV2(persistedState as LocalStorageInterfaceV2ToV3);
+    case 3:
+      migrateV3(persistedState as LocalStorageInterfaceV3ToV4);
+    case 4:
+      migrateV4(persistedState as LocalStorageInterfaceV4ToV5);
+    case 5:
+      migrateV5(persistedState as LocalStorageInterfaceV5ToV6);
+    case 6:
+      migrateV6(persistedState as LocalStorageInterfaceV6ToV7);
+    case 7:
+      migrateV7(persistedState as LocalStorageInterfaceV7oV8);
+    case 8:
+      migrateV8_1(persistedState as LocalStorageInterfaceV8oV8_1);
+    case 8.1:
+      migrateV8_1_fix(persistedState as LocalStorageInterfaceV8_1ToV8_2);
+    case 8.2:
+      migrateV8_2(persistedState as LocalStorageInterfaceV8_2ToV9);
+      break;
+  }
+  return persistedState;
 };

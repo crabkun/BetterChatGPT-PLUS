@@ -7,32 +7,7 @@ import { ConfigSlice, createConfigSlice } from './config-slice';
 import { PromptSlice, createPromptSlice } from './prompt-slice';
 import { ToastSlice, createToastSlice } from './toast-slice';
 import { CustomModelsSlice, createCustomModelsSlice } from './custom-models-slice';
-import {
-  LocalStorageInterfaceV0ToV1,
-  LocalStorageInterfaceV1ToV2,
-  LocalStorageInterfaceV2ToV3,
-  LocalStorageInterfaceV3ToV4,
-  LocalStorageInterfaceV4ToV5,
-  LocalStorageInterfaceV5ToV6,
-  LocalStorageInterfaceV6ToV7,
-  LocalStorageInterfaceV7oV8,
-  LocalStorageInterfaceV8_1ToV8_2,
-  LocalStorageInterfaceV8oV8_1,
-  LocalStorageInterfaceV8_2ToV9,
-} from '@type/chat';
-import {
-  migrateV0,
-  migrateV1,
-  migrateV2,
-  migrateV3,
-  migrateV4,
-  migrateV5,
-  migrateV6,
-  migrateV7,
-  migrateV8_1,
-  migrateV8_1_fix,
-  migrateV8_2,
-} from './migrate';
+import { applyMigrations, LATEST_PERSIST_VERSION } from './migrate';
 import {
   indexedDbPersistStorage,
   persistChatMessagesNow,
@@ -123,35 +98,9 @@ const useStore = create<StoreState>()(
       name: 'free-chat-gpt',
       partialize: (state) => createPartializedState(state),
       storage: indexedDbPersistStorage,
-      version: 9,
-      migrate: (persistedState, version) => {
-        switch (version) {
-          case 0:
-            migrateV0(persistedState as LocalStorageInterfaceV0ToV1);
-          case 1:
-            migrateV1(persistedState as LocalStorageInterfaceV1ToV2);
-          case 2:
-            migrateV2(persistedState as LocalStorageInterfaceV2ToV3);
-          case 3:
-            migrateV3(persistedState as LocalStorageInterfaceV3ToV4);
-          case 4:
-            migrateV4(persistedState as LocalStorageInterfaceV4ToV5);
-          case 5:
-            migrateV5(persistedState as LocalStorageInterfaceV5ToV6);
-          case 6:
-            migrateV6(persistedState as LocalStorageInterfaceV6ToV7);
-          case 7:
-            migrateV7(persistedState as LocalStorageInterfaceV7oV8);
-          case 8:
-            migrateV8_1(persistedState as LocalStorageInterfaceV8oV8_1);
-          case 8.1:
-            migrateV8_1_fix(persistedState as LocalStorageInterfaceV8_1ToV8_2);
-          case 8.2:
-            migrateV8_2(persistedState as LocalStorageInterfaceV8_2ToV9);
-            break;
-        }
-        return persistedState as StoreState;
-      },
+      version: LATEST_PERSIST_VERSION,
+      migrate: (persistedState, version) =>
+        applyMigrations(persistedState, version) as StoreState,
       onRehydrateStorage: () => async (state, error) => {
         if (error || !state?.chats) {
           return;
