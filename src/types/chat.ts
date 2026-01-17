@@ -77,7 +77,6 @@ export interface ChatInterface {
 
 export interface ConfigInterface {
   model: ModelOptions;
-  max_tokens: number;
   temperature: number;
   presence_penalty: number;
   top_p: number;

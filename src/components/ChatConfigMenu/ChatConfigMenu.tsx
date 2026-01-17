@@ -7,7 +7,6 @@ import PopupModal from '@components/PopupModal';
 import {
   FrequencyPenaltySlider,
   ImageDetailSelector,
-  MaxTokenSlider,
   ModelSelector,
   PresencePenaltySlider,
   TemperatureSlider,
@@ -57,7 +56,6 @@ const ChatConfigPopup = ({
     useStore.getState().defaultSystemMessage
   );
   const [_model, _setModel] = useState<ModelOptions>(config.model);
-  const [_maxToken, _setMaxToken] = useState<number>(config.max_tokens);
   const [_temperature, _setTemperature] = useState<number>(config.temperature);
   const [_topP, _setTopP] = useState<number>(config.top_p);
   const [_presencePenalty, _setPresencePenalty] = useState<number>(
@@ -75,7 +73,6 @@ const ChatConfigPopup = ({
   const handleSave = () => {
     setDefaultChatConfig({
       model: _model,
-      max_tokens: _maxToken,
       temperature: _temperature,
       top_p: _topP,
       presence_penalty: _presencePenalty,
@@ -88,7 +85,6 @@ const ChatConfigPopup = ({
 
   const handleReset = () => {
     _setModel(_defaultChatConfig.model);
-    _setMaxToken(_defaultChatConfig.max_tokens);
     _setTemperature(_defaultChatConfig.temperature);
     _setTopP(_defaultChatConfig.top_p);
     _setPresencePenalty(_defaultChatConfig.presence_penalty);
@@ -113,11 +109,6 @@ const ChatConfigPopup = ({
           _model={_model}
           _setModel={_setModel}
           _label={t('model')}
-        />
-        <MaxTokenSlider
-          _maxToken={_maxToken}
-          _setMaxToken={_setMaxToken}
-          _model={_model}
         />
         <TemperatureSlider
           _temperature={_temperature}

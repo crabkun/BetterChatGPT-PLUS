@@ -19,7 +19,6 @@
   "errors": {
     "errorGeneratingTitle": "Error generating title!",
     "noMessagesSubmitted": "No messages submitted!",
-    "messageExceedMaxToken": "Message exceed max token!",
     "failedToRetrieveData": "Failed to retrieve valid chat completion data.",
     "streamLocked": "Oops, the stream is locked right now. Please try again",
     "cancelledByUser": "Cancelled by user",

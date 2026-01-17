@@ -20,7 +20,6 @@ export interface CustomModel {
   top_provider: {
     context_length: number;
     is_moderated: boolean;
-    max_completion_tokens: number;
   };
   is_stream_supported: boolean;
 }
@@ -41,7 +40,6 @@ const defaultModelValues = {
   per_request_limits: null,
   top_provider: {
     context_length: 128000,
-    max_completion_tokens: 16384,
     is_moderated: true
   },
   is_stream_supported: true

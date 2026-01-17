@@ -11,9 +11,8 @@ const CustomModelsManager = () => {
   const [newModelName, setNewModelName] = useState('');
   const [newModelModality, setNewModelModality] = useState<'text->text' | 'text+image->text'>('text->text');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [contextLength, setContextLength] = useState(128000);
-  const [maxCompletionTokens, setMaxCompletionTokens] = useState(16384);
   const [isStreamSupported, setIsStreamSupported] = useState(true);
+  const defaultContextLength = 128000;
   const [pricing, setPricing] = useState({
     completion: '0.00001',
     image: '0.003613',
@@ -36,7 +35,7 @@ const CustomModelsManager = () => {
           tokenizer: "cl100k_base",
           instruct_type: null
         },
-        context_length: contextLength,
+        context_length: defaultContextLength,
         pricing: pricing,
         is_stream_supported: isStreamSupported
       });
@@ -44,8 +43,6 @@ const CustomModelsManager = () => {
       setNewModelName('');
       setNewModelModality('text->text');
       setShowAdvanced(false);
-      setContextLength(128000);
-      setMaxCompletionTokens(16384);
       setIsStreamSupported(true);
       setPricing({
         completion: '0.00001',
@@ -149,30 +146,6 @@ const CustomModelsManager = () => {
                   </h4>
 
                   <div className='space-y-4'>
-                    <div className='space-y-1'>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-200'>
-                        {t('customModels.contextLength') || ''}
-                      </label>
-                      <input
-                        type='number'
-                        value={contextLength}
-                        onChange={(e) => setContextLength(Number(e.target.value))}
-                        className='w-full text-black dark:text-white px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                      />
-                    </div>
-
-                    <div className='space-y-1'>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-200'>
-                        {t('customModels.maxCompletionTokens') || ''}
-                      </label>
-                      <input
-                        type='number'
-                        value={maxCompletionTokens}
-                        onChange={(e) => setMaxCompletionTokens(Number(e.target.value))}
-                        className='w-full text-black dark:text-white px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                      />
-                    </div>
-
                     <div className='space-y-4'>
                       <h4 className='text-left font-medium text-gray-700 dark:text-gray-200'>
                         {t('customModels.pricing') || ''}

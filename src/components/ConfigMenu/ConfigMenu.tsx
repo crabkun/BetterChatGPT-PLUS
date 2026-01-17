@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PopupModal from '@components/PopupModal';
 import { ConfigInterface, ImageDetail } from '@type/chat';
 import Select from 'react-select';
-import { modelOptions, modelMaxToken } from '@constants/modelLoader';
+import { modelOptions } from '@constants/modelLoader';
 import { ModelOptions } from '@utils/modelReader';
 import useStore from '@store/store';
 
@@ -20,7 +20,6 @@ const ConfigMenu = ({
   imageDetail: ImageDetail;
   setImageDetail: (imageDetail: ImageDetail) => void;
 }) => {
-  const [_maxToken, _setMaxToken] = useState<number>(config.max_tokens);
   const [_model, _setModel] = useState<ModelOptions>(config.model);
   const [_temperature, _setTemperature] = useState<number>(config.temperature);
   const [_presencePenalty, _setPresencePenalty] = useState<number>(
@@ -35,7 +34,6 @@ const ConfigMenu = ({
 
   const handleConfirm = () => {
     setConfig({
-      max_tokens: _maxToken,
       model: _model,
       temperature: _temperature,
       presence_penalty: _presencePenalty,
@@ -58,11 +56,6 @@ const ConfigMenu = ({
           _model={_model}
           _setModel={_setModel}
           _label={t('Model')}
-        />
-        <MaxTokenSlider
-          _maxToken={_maxToken}
-          _setMaxToken={_setMaxToken}
-          _model={_model}
         />
         <TemperatureSlider
           _temperature={_temperature}
@@ -167,48 +160,6 @@ export const ModelSelector = ({
         classNamePrefix='select'
         styles={customStyles}
       />
-    </div>
-  );
-};
-
-export const MaxTokenSlider = ({
-  _maxToken,
-  _setMaxToken,
-  _model,
-}: {
-  _maxToken: number;
-  _setMaxToken: React.Dispatch<React.SetStateAction<number>>;
-  _model: ModelOptions;
-}) => {
-  const { t } = useTranslation('model');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef &&
-      inputRef.current &&
-      _setMaxToken(Number(inputRef.current.value));
-  }, [_model]);
-
-  return (
-    <div>
-      <label className='block text-sm font-medium text-gray-900 dark:text-white'>
-        {t('token.label')}: {_maxToken}
-      </label>
-      <input
-        type='range'
-        ref={inputRef}
-        value={_maxToken}
-        onChange={(e) => {
-          _setMaxToken(Number(e.target.value));
-        }}
-        min={0}
-        max={modelMaxToken[_model]}
-        step={1}
-        className='w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer'
-      />
-      <div className='min-w-fit text-gray-500 dark:text-gray-300 text-sm mt-2'>
-        {t('token.description')}
-      </div>
     </div>
   );
 };

@@ -22,7 +22,6 @@ import {
   _defaultDisplayChatSize,
   defaultApiVersion,
   defaultModel,
-  defaultUserMaxToken,
   _defaultImageDetail,
 } from '@constants/chat';
 import { officialAPIEndpoint } from '@constants/auth';
@@ -71,7 +70,6 @@ export const migrateV5 = (persistedState: LocalStorageInterfaceV5ToV6) => {
   persistedState.chats.forEach((chat) => {
     chat.config = {
       ...chat.config,
-      max_tokens: defaultUserMaxToken,
     };
   });
 };

@@ -20,7 +20,6 @@ interface ModelData {
   };
   top_provider: {
     context_length: number;
-    max_completion_tokens: number | null;
     is_moderated: boolean;
   };
   per_request_limits: any;
@@ -36,7 +35,6 @@ const modelsJsonUrl = 'models.json';
 
 export const loadModels = async (): Promise<{
   modelOptions: string[];
-  modelMaxToken: { [key: string]: number };
   modelCost: ModelCost;
   modelTypes: { [key: string]: string };
   modelStreamSupport: { [key: string]: boolean };
@@ -46,7 +44,6 @@ export const loadModels = async (): Promise<{
   const modelsJson: ModelsJson = await response.json();
 
   const modelOptions: string[] = [];
-  const modelMaxToken: { [key: string]: number } = {};
   const modelCost: ModelCost = {};
   const modelTypes: { [key: string]: string } = {};
   const modelStreamSupport: { [key: string]: boolean } = {};
@@ -57,7 +54,6 @@ export const loadModels = async (): Promise<{
   customModels.forEach((model) => {
     const modelId = model.id;
     modelOptions.push(modelId);
-    modelMaxToken[modelId] = model.context_length;
     modelCost[modelId] = {
       prompt: { price: parseFloat(model.pricing.prompt), unit: 1 },
       completion: { price: parseFloat(model.pricing.completion), unit: 1 },
@@ -118,7 +114,6 @@ export const loadModels = async (): Promise<{
       top_provider: {
         context_length: 200000,
         is_moderated: true,
-        max_completion_tokens: 100000
       },
       is_stream_supported: false,
       type: 'text',
@@ -144,7 +139,6 @@ export const loadModels = async (): Promise<{
       top_provider: {
         context_length: 200000,
         is_moderated: true,
-        max_completion_tokens: 100000
       },
       is_stream_supported: false,
       type: 'text',
@@ -170,7 +164,6 @@ export const loadModels = async (): Promise<{
       top_provider: {
         context_length: 200000,
         is_moderated: true,
-        max_completion_tokens: 100000
       },
       is_stream_supported: false,
       type: 'text',
@@ -179,7 +172,6 @@ export const loadModels = async (): Promise<{
 
   specificModels.forEach((model) => {
     modelOptions.push(model.id);
-    modelMaxToken[model.id] = model.context_length;
     modelCost[model.id] = {
       prompt: { price: parseFloat(model.pricing.prompt), unit: 1 },
       completion: { price: parseFloat(model.pricing.completion), unit: 1 },
@@ -193,7 +185,6 @@ export const loadModels = async (): Promise<{
   modelsJson.data.forEach((model) => {
     const modelId = model.id.split('/').pop() as string;
     modelOptions.push(modelId);
-    modelMaxToken[modelId] = model.context_length;
     modelCost[modelId] = {
       prompt: { price: parseFloat(model.pricing.prompt), unit: 1 },
       completion: { price: parseFloat(model.pricing.completion), unit: 1 },
@@ -268,7 +259,6 @@ export const loadModels = async (): Promise<{
 
   return {
     modelOptions,
-    modelMaxToken,
     modelCost,
     modelTypes,
     modelStreamSupport,

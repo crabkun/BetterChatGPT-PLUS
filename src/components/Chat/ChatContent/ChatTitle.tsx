@@ -70,9 +70,6 @@ const ChatTitle = React.memo(() => {
           {t('model')}: {getModelDisplayName(chat.config.model)}
         </div>
         <div className='text-center p-1 rounded-md bg-gray-300/20 dark:bg-gray-900/10 hover:bg-gray-300/50 dark:hover:bg-gray-900/50'>
-          {t('token.label')}: {chat.config.max_tokens}
-        </div>
-        <div className='text-center p-1 rounded-md bg-gray-300/20 dark:bg-gray-900/10 hover:bg-gray-300/50 dark:hover:bg-gray-900/50'>
           {t('temperature.label')}: {chat.config.temperature}
         </div>
         <div className='text-center p-1 rounded-md bg-gray-300/20 dark:bg-gray-900/10 hover:bg-gray-300/50 dark:hover:bg-gray-900/50'>

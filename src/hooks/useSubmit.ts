@@ -11,7 +11,7 @@ import {
 } from '@type/chat';
 import { getChatCompletion, getChatCompletionStream } from '@api/api';
 import { parseEventSource } from '@api/helper';
-import { limitMessageTokens, updateTotalTokenUsed } from '@utils/messageUtils';
+import { updateTotalTokenUsed } from '@utils/messageUtils';
 import { _defaultChatConfig } from '@constants/chat';
 import { officialAPIEndpoint } from '@constants/auth';
 import { modelStreamSupport } from '@constants/modelLoader';
@@ -168,25 +168,21 @@ const useSubmit = () => {
     try {
       const isStreamSupported =
         modelStreamSupport[chats[currentChatIndex].config.model];
-        const { model, temperature, max_tokens } = chats[currentChatIndex].config;
-        const supportsStream = modelStreamSupport[model];
-        console.log('[useSubmit] Model streaming support:', {
-          model,
-          supportsStream,
-          isStreamSupported
-        });
+      const { model } = chats[currentChatIndex].config;
+      const supportsStream = modelStreamSupport[model];
+      console.log('[useSubmit] Model streaming support:', {
+        model,
+        supportsStream,
+        isStreamSupported
+      });
       let data;
       let stream;
       if (chats[currentChatIndex].messages.length === 0)
         throw new Error(t('errors.noMessagesSubmitted') as string);
 
-      const messages = limitMessageTokens(
-        stripReasoningFromMessages(chats[currentChatIndex].messages),
-        chats[currentChatIndex].config.max_tokens,
-        chats[currentChatIndex].config.model
+      const messages = stripReasoningFromMessages(
+        chats[currentChatIndex].messages
       );
-      if (messages.length === 0)
-        throw new Error(t('errors.messageExceedMaxToken') as string);
       if (!isStreamSupported) {
         if (!apiKey || apiKey.length === 0) {
           // official endpoint

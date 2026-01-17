@@ -267,9 +267,6 @@ export const convertOpenAIToBetterChatGPTFormat = (
           ...((openAIChatExport as any).temperature !== undefined && {
             temperature: (openAIChatExport as any).temperature,
           }),
-          ...((openAIChatExport as any).max_tokens !== undefined && {
-            max_tokens: (openAIChatExport as any).max_tokens,
-          }),
           ...((openAIChatExport as any).top_p !== undefined && {
             top_p: (openAIChatExport as any).top_p,
           }),
@@ -342,9 +339,6 @@ export const convertOpenAIToBetterChatGPTFormat = (
     ..._defaultChatConfig,
     ...((openAIChatExport as any).temperature !== undefined && {
       temperature: (openAIChatExport as any).temperature,
-    }),
-    ...((openAIChatExport as any).max_tokens !== undefined && {
-      max_tokens: (openAIChatExport as any).max_tokens,
     }),
     ...((openAIChatExport as any).top_p !== undefined && {
       top_p: (openAIChatExport as any).top_p,
