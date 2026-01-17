@@ -58,6 +58,19 @@ const ImportChat = () => {
   const { t } = useTranslation(['main', 'import']);
   const setChats = useStore.getState().setChats;
   const setFolders = useStore.getState().setFolders;
+  const normalizeImportedChatIds = (
+    incomingChats: ChatInterface[],
+    existingChats: ChatInterface[]
+  ) => {
+    const seenIds = new Set(existingChats.map((chat) => chat.id));
+    return incomingChats.map((chat) => {
+      const nextId =
+        chat.id && !seenIds.has(chat.id) ? chat.id : uuidv4();
+      seenIds.add(nextId);
+      if (nextId === chat.id) return chat;
+      return { ...chat, id: nextId };
+    });
+  };
   const inputRef = useRef<HTMLInputElement>(null);
   const [alert, setAlert] = useState<{
     message: string;
@@ -97,7 +110,11 @@ const ImportChat = () => {
                 const prevChats: ChatInterface[] = JSON.parse(
                   JSON.stringify(useStore.getState().chats)
                 );
-                setChats(chats.concat(prevChats));
+                const normalizedChats = normalizeImportedChatIds(
+                  chats,
+                  prevChats
+                );
+                setChats(normalizedChats.concat(prevChats));
                 if (removedChatsCount > 0) {
                   toast.info(
                     `${t('reduceMessagesSuccess', {
@@ -175,9 +192,13 @@ const ImportChat = () => {
                     const updatedChats: ChatInterface[] = JSON.parse(
                       JSON.stringify(prevChats)
                     );
-                    setChats(chatsToImport.concat(updatedChats));
+                    const normalizedChats = normalizeImportedChatIds(
+                      chatsToImport,
+                      updatedChats
+                    );
+                    setChats(normalizedChats.concat(updatedChats));
                   } else {
-                    setChats(chatsToImport);
+                    setChats(normalizeImportedChatIds(chatsToImport, []));
                   }
                   if (removedChatsCount > 0) {
                     toast.info(
@@ -238,9 +259,13 @@ const ImportChat = () => {
                           const updatedChats: ChatInterface[] = JSON.parse(
                             JSON.stringify(prevChats)
                           );
-                          setChats(parsedData.chats.concat(updatedChats));
+                          const normalizedChats = normalizeImportedChatIds(
+                            parsedData.chats,
+                            updatedChats
+                          );
+                          setChats(normalizedChats.concat(updatedChats));
                         } else {
-                          setChats(parsedData.chats);
+                          setChats(normalizeImportedChatIds(parsedData.chats, []));
                         }
                       }
                       if (
