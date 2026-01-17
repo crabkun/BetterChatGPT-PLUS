@@ -258,7 +258,6 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
       } catch (error) {
         console.warn('Failed to parse localStorage state for migration.', error);
       }
-      localStorage.removeItem(storageKey);
     }
   }
 
@@ -276,7 +275,6 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
       } catch (error) {
         console.warn('Failed to parse cloud localStorage state for migration.', error);
       }
-      localStorage.removeItem(cloudKey);
     }
   }
 };
