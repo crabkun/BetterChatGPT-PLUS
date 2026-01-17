@@ -9,6 +9,7 @@ const MESSAGES_STORE = 'messages';
 const MESSAGE_KEY_PREFIX = 'chat-messages:';
 const WRITE_DEBOUNCE_MS = 300;
 const META_SUFFIX = '__meta';
+const MIGRATION_FLAG_KEY = 'migration:localStorage';
 
 const persistStore = createStore(DB_NAME, PERSIST_STORE);
 const messagesStore = createStore(DB_NAME, MESSAGES_STORE);
@@ -223,6 +224,12 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
   hasMigratedLocalStorage = true;
   if (typeof localStorage === 'undefined') return;
 
+  const migrationFlag = await get<boolean | undefined>(
+    MIGRATION_FLAG_KEY,
+    persistStore
+  );
+  if (migrationFlag) return;
+
   const storageKey = 'free-chat-gpt';
   const existing = await get<PersistMeta | undefined>(
     getMetaKey(storageKey),
@@ -277,6 +284,8 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
       }
     }
   }
+
+  await set(MIGRATION_FLAG_KEY, true, persistStore);
 };
 
 export const readPersistedState = async <S>(storageKey: string) => {
