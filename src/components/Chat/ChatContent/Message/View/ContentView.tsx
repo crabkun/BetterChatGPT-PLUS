@@ -1,9 +1,10 @@
-import React, {
+﻿import React, {
   DetailedHTMLProps,
   HTMLAttributes,
   memo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ReactMarkdown from 'react-markdown';
 import { CodeProps, ReactMarkdownProps } from 'react-markdown/lib/ast-to-react';
@@ -24,7 +25,9 @@ import {
   ContentInterface,
   ImageContentInterface,
   isImageContent,
+  isReasoningContent,
   isTextContent,
+  ReasoningContentInterface,
 } from '@type/chat';
 
 import { codeLanguageSubset } from '@constants/chat';
@@ -54,6 +57,7 @@ const ContentView = memo(
     messageIndex: number;
   }) => {
     const { handleSubmit } = useSubmit();
+    const { t } = useTranslation('main');
 
     const [isDelete, setIsDelete] = useState<boolean>(false);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -65,6 +69,20 @@ const ContentView = memo(
     );
     const inlineLatex = useStore((state) => state.inlineLatex);
     const markdownMode = useStore((state) => state.markdownMode);
+    const reasoningContent = content.find(isReasoningContent) as
+      | ReasoningContentInterface
+      | undefined;
+    const reasoningText = reasoningContent?.text ?? '';
+    const reasoningSeconds = reasoningContent?.durationSeconds ?? 0;
+    const reasoningIsCompleted =
+      reasoningContent?.isCompleted ?? reasoningContent?.durationSeconds !== undefined;
+    const reasoningTitle = reasoningIsCompleted
+      ? (t('reasoning.completed', {
+          seconds: reasoningSeconds,
+        }) as string)
+      : (t('reasoning.inProgress', {
+          seconds: reasoningSeconds,
+        }) as string);
 
     const handleDelete = () => {
       const updatedChats: ChatInterface[] = JSON.parse(
@@ -107,7 +125,25 @@ const ContentView = memo(
       setChats(updatedChats);
       handleSubmit();
     };
-    const currentTextContent = isTextContent(content[0]) ? content[0].text : '';
+    const handleReasoningToggle = (
+      event: React.SyntheticEvent<HTMLDetailsElement>
+    ) => {
+      const isOpen = (event.currentTarget as HTMLDetailsElement).open;
+      const updatedChats: ChatInterface[] = JSON.parse(
+        JSON.stringify(useStore.getState().chats)
+      );
+      const updatedMessage =
+        updatedChats[currentChatIndex].messages[messageIndex];
+      const reasoningEntry = updatedMessage.content.find(isReasoningContent) as
+        | ReasoningContentInterface
+        | undefined;
+      if (reasoningEntry) {
+        reasoningEntry.isCollapsed = !isOpen;
+        setChats(updatedChats);
+      }
+    };
+    const textEntry = content.find(isTextContent);
+    const currentTextContent = textEntry ? textEntry.text : '';
     const handleCopy = () => {
       navigator.clipboard.writeText(currentTextContent);
     };
@@ -124,6 +160,51 @@ const ContentView = memo(
     : [];
     return (
       <>
+        {reasoningText && (
+          <details
+            className='mb-3 rounded-md border border-black/10 bg-gray-100/80 dark:bg-gray-700/70 dark:border-gray-600'
+            open={!reasoningContent?.isCollapsed}
+            onToggle={handleReasoningToggle}
+          >
+            <summary className='cursor-pointer select-none px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200'>
+              {reasoningTitle}
+            </summary>
+            <div className='px-3 pb-3 text-xs text-gray-700 dark:text-gray-200'>
+              {markdownMode ? (
+                <div className='markdown prose prose-sm w-full max-w-full break-words dark:prose-invert'>
+                  <ReactMarkdown
+                    remarkPlugins={[
+                      remarkGfm,
+                      [remarkMath, { singleDollarTextMath: inlineLatex }],
+                    ]}
+                    rehypePlugins={[
+                      rehypeKatex,
+                      [
+                        rehypeHighlight,
+                        {
+                          detect: true,
+                          ignoreMissing: true,
+                          subset: codeLanguageSubset,
+                        },
+                      ],
+                    ]}
+                    linkTarget='_new'
+                    components={{
+                      code,
+                      p,
+                    }}
+                  >
+                    {inlineLatex
+                      ? preprocessLaTeX(reasoningText)
+                      : reasoningText}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <span className='whitespace-pre-wrap'>{reasoningText}</span>
+              )}
+            </div>
+          </details>
+        )}
         <div className='markdown prose w-full md:max-w-full break-words dark:prose-invert dark share-gpt-message'>
           {markdownMode ? (
             <ReactMarkdown
@@ -257,3 +338,4 @@ const p = memo(
 );
 
 export default ContentView;
+

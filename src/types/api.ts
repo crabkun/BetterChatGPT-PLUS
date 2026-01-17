@@ -11,6 +11,7 @@ export type EventSourceData = EventSourceDataInterface | '[DONE]';
 export interface EventSourceDataChoices {
   delta: {
     content?: string;
+    reasoning_content?: string;
     role?: string;
   };
   finish_reason?: string;

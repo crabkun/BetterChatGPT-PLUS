@@ -8,6 +8,7 @@ import {
   ChatInterface,
   ContentInterface,
   ImageContentInterface,
+  isImageContent,
   TextContentInterface,
 } from '@type/chat';
 
@@ -148,15 +149,18 @@ const EditView = ({
     setImageUrl('');
   };
 
-  const handleImageDetailChange = (index: number, detail: string) => {
+  const handleImageDetailChange = (contentIndex: number, detail: string) => {
     const updatedImages = [..._content];
-    updatedImages[index + 1].image_url.detail = detail;
+    const imageEntry = updatedImages[contentIndex] as ImageContentInterface | undefined;
+    if (imageEntry && imageEntry.type === 'image_url') {
+      imageEntry.image_url.detail = detail;
+    }
     _setContent(updatedImages);
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (contentIndex: number) => {
     const updatedImages = [..._content];
-    updatedImages.splice(index + 1, 1);
+    updatedImages.splice(contentIndex, 1);
 
     _setContent(updatedImages);
   };
@@ -440,8 +444,8 @@ const EditViewButtons = memo(
   }: {
     sticky?: boolean;
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleImageDetailChange: (index: number, e: string) => void;
-    handleRemoveImage: (index: number) => void;
+    handleImageDetailChange: (contentIndex: number, e: string) => void;
+    handleRemoveImage: (contentIndex: number) => void;
     handleGenerate: () => void;
     handleSave: () => void;
     setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -457,6 +461,9 @@ const EditViewButtons = memo(
     const { t } = useTranslation();
     const generating = useStore.getState().generating;
     const advancedMode = useStore((state) => state.advancedMode);
+    const imageItems = _content
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => isImageContent(item));
 
     return (
       <div>
@@ -464,7 +471,7 @@ const EditViewButtons = memo(
           <>
             <div className='flex justify-center'>
               <div className='flex gap-5'>
-                {_content.slice(1).map((image, index) => (
+                {imageItems.map(({ item: image, index }) => (
                   <div
                     key={index}
                     className='image-container flex flex-col gap-2'

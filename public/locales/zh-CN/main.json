@@ -1,4 +1,4 @@
-{
+﻿{
   "save": "保存",
   "generate": "生成",
   "cancel": "取消",
@@ -44,5 +44,11 @@
   "cloned": "已创建副本",
   "enterToSubmit": "按回车键提交",
   "enableShareGPT": "启用 ShareGPT",
-  "submitPlaceholder": "输入消息或点击 [/] 以使用提示词…"
+  "submitPlaceholder": "输入消息或点击 [/] 以使用提示词…",
+  "reasoning": {
+    "inProgress": "深度思考中...（已耗时：{{seconds}}秒）",
+    "completed": "深度思考完成...（共耗时：{{seconds}}秒）"
+  }
+
 }
+

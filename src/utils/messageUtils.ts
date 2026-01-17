@@ -35,8 +35,11 @@ export const getChatGPTEncoding = (
   const serialized = [
     messages
       .map(({ role, content }) => {
-        const textContent = content[0];
-        const text = textContent && isTextContent(textContent) ? textContent.text : '';
+        const textContent = Array.isArray(content)
+          ? content.find(isTextContent)
+          : undefined;
+        const text =
+          textContent && isTextContent(textContent) ? textContent.text : '';
         return `<|im_start|>${role}${roleSep}${
           text
         }<|im_end|>`;

@@ -1,5 +1,6 @@
-import html2canvas from 'html2canvas';
-import { ChatInterface, ContentInterface, isImageContent, isTextContent } from '@type/chat';
+﻿import html2canvas from 'html2canvas';
+import i18next from 'i18next';
+import { ChatInterface, ContentInterface, isImageContent, isReasoningContent, isTextContent } from '@type/chat';
 
 export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -84,6 +85,19 @@ const contentToMarkdown = (contents: ContentInterface[]): string => {
     if (content) {
       if (isTextContent(content)) {
         text += content.text;
+      } else if (isReasoningContent(content)) {
+        const durationSeconds = content.durationSeconds ?? 0;
+        const isCompleted = content.isCompleted ?? content.durationSeconds !== undefined;
+        const title = isCompleted
+          ? i18next.t('reasoning.completed', {
+              ns: 'main',
+              seconds: durationSeconds,
+            })
+          : i18next.t('reasoning.inProgress', {
+              ns: 'main',
+              seconds: durationSeconds,
+            });
+        text += `${title}\n\n${content.text}`;
       } else if (isImageContent(content)) {
         text += `![image](${content.image_url.url})`;
       }
@@ -126,3 +140,4 @@ export const preprocessLaTeX = (content: string) => {
   );
   return inlineProcessedContent;
 };
+

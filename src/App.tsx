@@ -8,6 +8,7 @@ import Menu from '@components/Menu';
 import useInitialiseNewChat from '@hooks/useInitialiseNewChat';
 import { ChatInterface } from '@type/chat';
 import { Theme } from '@type/theme';
+import { initializeModels } from '@constants/modelLoader';
 import ApiPopup from '@components/ApiPopup';
 import Toast from '@components/Toast';
 import { ToastContainer } from 'react-toastify';
@@ -20,6 +21,7 @@ function App() {
   const setTheme = useStore((state) => state.setTheme);
   const setApiKey = useStore((state) => state.setApiKey);
   const setCurrentChatIndex = useStore((state) => state.setCurrentChatIndex);
+  const customModels = useStore((state) => state.customModels);
 
   useEffect(() => {
     document.documentElement.lang = i18n.language;
@@ -79,6 +81,7 @@ function App() {
           setCurrentChatIndex(0);
         }
       }
+      initializeModels();
     };
 
     if (useStore.persist.hasHydrated()) {
@@ -89,6 +92,10 @@ function App() {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    initializeModels();
+  }, [customModels]);
 
   return (
     <div className='overflow-hidden w-full h-full relative'>

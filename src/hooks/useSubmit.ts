@@ -3,8 +3,11 @@ import { useTranslation } from 'react-i18next';
 import {
   ChatInterface,
   ConfigInterface,
+  ContentInterface,
   MessageInterface,
+  ReasoningContentInterface,
   TextContentInterface,
+  isReasoningContent,
 } from '@type/chat';
 import { getChatCompletion, getChatCompletionStream } from '@api/api';
 import { parseEventSource } from '@api/helper';
@@ -23,6 +26,17 @@ const useSubmit = () => {
   const generating = useStore((state) => state.generating);
   const currentChatIndex = useStore((state) => state.currentChatIndex);
   const setChats = useStore((state) => state.setChats);
+  const stripReasoningFromContent = (content: ContentInterface[]) =>
+    content.filter((entry) => !isReasoningContent(entry));
+  const stripReasoningFromMessages = (
+    messages: MessageInterface[]
+  ): MessageInterface[] =>
+    messages.map((message) => ({
+      ...message,
+      content: Array.isArray(message.content)
+        ? message.content.filter((content) => !isReasoningContent(content))
+        : message.content,
+    }));
 
   const generateTitle = async (
     message: MessageInterface[],
@@ -106,7 +120,7 @@ const useSubmit = () => {
         throw new Error(t('errors.noMessagesSubmitted') as string);
 
       const messages = limitMessageTokens(
-        chats[currentChatIndex].messages,
+        stripReasoningFromMessages(chats[currentChatIndex].messages),
         chats[currentChatIndex].config.max_tokens,
         chats[currentChatIndex].config.model
       );
@@ -192,6 +206,8 @@ const useSubmit = () => {
           const reader = stream.getReader();
           let reading = true;
           let partial = '';
+          let reasoningStart: number | null = null;
+          let reasoningCompleted = false;
           while (reading && useStore.getState().generating) {
             const { done, value } = await reader.read();
             const result = parseEventSource(
@@ -202,7 +218,8 @@ const useSubmit = () => {
             if (result === '[DONE]' || done) {
               reading = false;
             } else {
-              const resultString = result.reduce((output: string, curr) => {
+              const resultStrings = result.reduce(
+                (output: { content: string; reasoning: string; hasContent: boolean }, curr) => {
                 if (typeof curr === 'string') {
                   partial += curr;
                 } else {
@@ -211,19 +228,91 @@ const useSubmit = () => {
                     return output;
                   }
                   const content = curr.choices[0]?.delta?.content ?? null;
-                  if (content) output += content;
+                  const reasoningContent =
+                    curr.choices[0]?.delta?.reasoning_content ?? null;
+                  if (reasoningContent) {
+                    output.reasoning += reasoningContent;
+                    if (!reasoningStart) {
+                      reasoningStart = Date.now();
+                    }
+                  }
+                  if (content) {
+                    output.content += content;
+                    output.hasContent = true;
+                  }
                 }
                 return output;
-              }, '');
+              },
+              { content: '', reasoning: '', hasContent: false }
+            );
 
               const updatedChats: ChatInterface[] = JSON.parse(
                 JSON.stringify(useStore.getState().chats)
               );
               const updatedMessages = updatedChats[currentChatIndex].messages;
-              (
-                updatedMessages[updatedMessages.length - 1]
-                  .content[0] as TextContentInterface
-              ).text += resultString;
+              const latestMessage = updatedMessages[updatedMessages.length - 1];
+              if (resultStrings.reasoning) {
+                let reasoningIndex = latestMessage.content.findIndex(
+                  (content) => isReasoningContent(content)
+                );
+                if (reasoningIndex === -1) {
+                  const reasoningEntry: ReasoningContentInterface = {
+                    type: 'reasoning',
+                    text: '',
+                    isCollapsed: false,
+                    isCompleted: false,
+                  };
+                  const nextContent: ContentInterface[] = [];
+                  if (latestMessage.content.length > 0) {
+                    nextContent.push(latestMessage.content[0]);
+                    nextContent.push(reasoningEntry);
+                    nextContent.push(...latestMessage.content.slice(1));
+                  } else {
+                    nextContent.push(reasoningEntry);
+                  }
+                  latestMessage.content = nextContent;
+                  reasoningIndex = nextContent.indexOf(reasoningEntry);
+                }
+                const reasoningEntry = latestMessage.content[
+                  reasoningIndex
+                ] as ReasoningContentInterface;
+                reasoningEntry.text += resultStrings.reasoning;
+              }
+              const liveReasoningEntry = latestMessage.content.find(
+                (content) => isReasoningContent(content)
+              ) as ReasoningContentInterface | undefined;
+              if (liveReasoningEntry && reasoningStart && !reasoningCompleted) {
+                const durationSeconds = Math.max(
+                  1,
+                  Math.ceil((Date.now() - reasoningStart) / 1000)
+                );
+                liveReasoningEntry.durationSeconds = durationSeconds;
+                liveReasoningEntry.isCompleted = false;
+              }
+              if (
+                resultStrings.hasContent &&
+                reasoningStart &&
+                !reasoningCompleted
+              ) {
+                const durationSeconds = Math.max(
+                  1,
+                  Math.ceil((Date.now() - reasoningStart) / 1000)
+                );
+                const reasoningEntry = latestMessage.content.find(
+                  (content) => isReasoningContent(content)
+                ) as ReasoningContentInterface | undefined;
+                if (reasoningEntry) {
+                  reasoningEntry.isCollapsed = true;
+                  reasoningEntry.durationSeconds = durationSeconds;
+                  reasoningEntry.isCompleted = true;
+                }
+                reasoningCompleted = true;
+              }
+              if (resultStrings.content) {
+                (
+                  latestMessage.content[0] as TextContentInterface
+                ).text += resultStrings.content;
+              }
               setChats(updatedChats);
             }
           }
@@ -234,6 +323,26 @@ const useSubmit = () => {
           }
           reader.releaseLock();
           stream.cancel();
+          if (reasoningStart && !reasoningCompleted) {
+            const updatedChats: ChatInterface[] = JSON.parse(
+              JSON.stringify(useStore.getState().chats)
+            );
+            const updatedMessages = updatedChats[currentChatIndex].messages;
+            const latestMessage = updatedMessages[updatedMessages.length - 1];
+            const reasoningEntry = latestMessage.content.find(
+              (content) => isReasoningContent(content)
+            ) as ReasoningContentInterface | undefined;
+            if (reasoningEntry) {
+              const durationSeconds = Math.max(
+                1,
+                Math.ceil((Date.now() - reasoningStart) / 1000)
+              );
+              reasoningEntry.durationSeconds = durationSeconds;
+              reasoningEntry.isCompleted = true;
+              reasoningEntry.isCollapsed = true;
+              setChats(updatedChats);
+            }
+          }
         }
       }
 
@@ -266,8 +375,8 @@ const useSubmit = () => {
         const message: MessageInterface = {
           role: 'user',
           content: [
-            ...user_message,
-            ...assistant_message,
+            ...stripReasoningFromContent(user_message),
+            ...stripReasoningFromContent(assistant_message),
             {
               type: 'text',
               text: `Generate a title in less than 6 words for the conversation so far (language: ${i18n.language})`,
