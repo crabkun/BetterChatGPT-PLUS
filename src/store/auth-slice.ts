@@ -6,10 +6,12 @@ export interface AuthSlice {
   apiEndpoint: string;
   apiVersion?: string;
   firstVisit: boolean;
+  apiKeyConfigured: boolean;
   setApiKey: (apiKey: string) => void;
   setApiEndpoint: (apiEndpoint: string) => void;
   setApiVersion: (apiVersion: string) => void;
   setFirstVisit: (firstVisit: boolean) => void;
+  setApiKeyConfigured: (apiKeyConfigured: boolean) => void;
 }
 
 export const createAuthSlice: StoreSlice<AuthSlice> = (set, get) => ({
@@ -17,10 +19,12 @@ export const createAuthSlice: StoreSlice<AuthSlice> = (set, get) => ({
   apiEndpoint: defaultAPIEndpoint,
   apiVersion: undefined,
   firstVisit: true,
+  apiKeyConfigured: false,
   setApiKey: (apiKey: string) => {
     set((prev: AuthSlice) => ({
       ...prev,
       apiKey: apiKey,
+      apiKeyConfigured: apiKey.length > 0 ? true : prev.apiKeyConfigured,
     }));
   },
   setApiEndpoint: (apiEndpoint: string) => {
@@ -39,6 +43,12 @@ export const createAuthSlice: StoreSlice<AuthSlice> = (set, get) => ({
     set((prev: AuthSlice) => ({
       ...prev,
       firstVisit: firstVisit,
+    }));
+  },
+  setApiKeyConfigured: (apiKeyConfigured: boolean) => {
+    set((prev: AuthSlice) => ({
+      ...prev,
+      apiKeyConfigured: apiKeyConfigured,
     }));
   },
 });

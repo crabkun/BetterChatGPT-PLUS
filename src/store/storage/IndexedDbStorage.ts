@@ -1,5 +1,5 @@
 import { createStore, del, get, set } from 'idb-keyval';
-import { StateStorage, StorageValue } from 'zustand/middleware';
+import { PersistStorage, StorageValue } from 'zustand/middleware';
 import { ChatInterface, MessageInterface } from '@type/chat';
 
 const DB_NAME = 'better-chatgpt-plus';
@@ -7,6 +7,7 @@ const PERSIST_STORE = 'persist';
 const MESSAGES_STORE = 'messages';
 const MESSAGE_KEY_PREFIX = 'chat-messages:';
 const WRITE_DEBOUNCE_MS = 300;
+const META_SUFFIX = '__meta';
 
 const persistStore = createStore(DB_NAME, PERSIST_STORE);
 const messagesStore = createStore(DB_NAME, MESSAGES_STORE);
@@ -14,9 +15,9 @@ const messagesStore = createStore(DB_NAME, MESSAGES_STORE);
 let hasEnsuredIndexedDb = false;
 let hasShownIndexedDbAlert = false;
 let ensureStoresPromise: Promise<void> | null = null;
-const hydratedStores = new Set<string>();
-
 const getMessageKey = (chatId: string) => `${MESSAGE_KEY_PREFIX}${chatId}`;
+const getMetaKey = (name: string) => `${name}:${META_SUFFIX}`;
+const getPersistKey = (name: string, key: string) => `${name}:${key}`;
 
 const showIndexedDbAlert = () => {
   if (hasShownIndexedDbAlert || typeof window === 'undefined') return;
@@ -80,25 +81,54 @@ const ensureStores = async () => {
   }
 };
 
-export const indexedDbStateStorage: StateStorage = {
+type PersistMeta = {
+  version: number;
+  keys: string[];
+};
+
+export const indexedDbPersistStorage: PersistStorage<any> = {
   getItem: async (name) => {
     await ensureIndexedDbAvailable();
     await migrateLocalStorageToIndexedDbIfNeeded();
-    const value = await get<string | null>(name, persistStore);
-    hydratedStores.add(name);
-    return value ?? null;
+    const meta = await get<PersistMeta | undefined>(
+      getMetaKey(name),
+      persistStore
+    );
+    if (!meta) return null;
+    const values = await Promise.all(
+      meta.keys.map((key) => get(getPersistKey(name, key), persistStore))
+    );
+    const state = meta.keys.reduce<Record<string, unknown>>((acc, key, index) => {
+      acc[key] = values[index];
+      return acc;
+    }, {});
+    return { state, version: meta.version };
   },
   setItem: async (name, value) => {
     await ensureIndexedDbAvailable();
-    if (!hydratedStores.has(name)) {
-      const existing = await get<string | null>(name, persistStore);
-      if (existing) return;
-    }
-    await set(name, value, persistStore);
+    const metaKey = getMetaKey(name);
+    const nextKeys = Object.keys(value.state ?? {});
+    const previousMeta = await get<PersistMeta | undefined>(metaKey, persistStore);
+    const previousKeys = previousMeta?.keys ?? [];
+    const removedKeys = previousKeys.filter((key) => !nextKeys.includes(key));
+    await Promise.all(
+      removedKeys.map((key) => del(getPersistKey(name, key), persistStore))
+    );
+    await Promise.all(
+      nextKeys.map((key) => set(getPersistKey(name, key), value.state[key], persistStore))
+    );
+    await set(metaKey, { version: value.version, keys: nextKeys }, persistStore);
   },
   removeItem: async (name) => {
     await ensureIndexedDbAvailable();
-    await del(name, persistStore);
+    const metaKey = getMetaKey(name);
+    const meta = await get<PersistMeta | undefined>(metaKey, persistStore);
+    if (meta?.keys?.length) {
+      await Promise.all(
+        meta.keys.map((key) => del(getPersistKey(name, key), persistStore))
+      );
+    }
+    await del(metaKey, persistStore);
   },
 };
 
@@ -193,16 +223,19 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
   if (typeof localStorage === 'undefined') return;
 
   const storageKey = 'free-chat-gpt';
-  const existing = await get(storageKey, persistStore);
+  const existing = await get<PersistMeta | undefined>(
+    getMetaKey(storageKey),
+    persistStore
+  );
 
   if (!existing) {
     const localValue = localStorage.getItem(storageKey);
     if (localValue) {
-      await set(storageKey, localValue, persistStore);
       try {
         const parsed = JSON.parse(localValue) as StorageValue<{
           chats?: ChatInterface[];
         }>;
+        await writePersistedState(storageKey, parsed);
         if (parsed?.state?.chats) {
           await persistChatMessagesNow(parsed.state.chats);
         }
@@ -214,11 +247,19 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
   }
 
   const cloudKey = 'cloud';
-  const existingCloud = await get(cloudKey, persistStore);
+  const existingCloud = await get<PersistMeta | undefined>(
+    getMetaKey(cloudKey),
+    persistStore
+  );
   if (!existingCloud) {
     const cloudValue = localStorage.getItem(cloudKey);
     if (cloudValue) {
-      await set(cloudKey, cloudValue, persistStore);
+      try {
+        const parsed = JSON.parse(cloudValue) as StorageValue<Record<string, unknown>>;
+        await writePersistedState(cloudKey, parsed);
+      } catch (error) {
+        console.warn('Failed to parse cloud localStorage state for migration.', error);
+      }
       localStorage.removeItem(cloudKey);
     }
   }
@@ -226,13 +267,7 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
 
 export const readPersistedState = async <S>(storageKey: string) => {
   await ensureIndexedDbAvailable();
-  const raw = await get<string | null>(storageKey, persistStore);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as StorageValue<S>;
-  } catch (error) {
-    return null;
-  }
+  return indexedDbPersistStorage.getItem(storageKey) as Promise<StorageValue<S> | null>;
 };
 
 export const writePersistedState = async <S>(
@@ -240,5 +275,5 @@ export const writePersistedState = async <S>(
   value: StorageValue<S>
 ) => {
   await ensureIndexedDbAvailable();
-  await set(storageKey, JSON.stringify(value), persistStore);
+  await indexedDbPersistStorage.setItem(storageKey, value);
 };

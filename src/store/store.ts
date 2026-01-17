@@ -1,5 +1,5 @@
 import { StoreApi, create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { ChatSlice, createChatSlice } from './chat-slice';
 import { InputSlice, createInputSlice } from './input-slice';
 import { AuthSlice, createAuthSlice } from './auth-slice';
@@ -34,7 +34,7 @@ import {
   migrateV8_2,
 } from './migrate';
 import {
-  indexedDbStateStorage,
+  indexedDbPersistStorage,
   persistChatMessagesNow,
   writePersistedState,
   syncChatsWithMessages,
@@ -68,6 +68,7 @@ export const createPartializedState = (
   chats: options?.includeMessages ? state.chats : stripChatMessages(state.chats),
   currentChatIndex: state.currentChatIndex,
   apiKey: state.apiKey,
+  apiKeyConfigured: state.apiKeyConfigured,
   apiVersion: state.apiVersion,
   apiEndpoint: state.apiEndpoint,
   theme: state.theme,
@@ -120,7 +121,7 @@ const useStore = create<StoreState>()(
     {
       name: 'free-chat-gpt',
       partialize: (state) => createPartializedState(state),
-      storage: createJSONStorage(() => indexedDbStateStorage),
+      storage: indexedDbPersistStorage,
       version: 9,
       migrate: (persistedState, version) => {
         switch (version) {

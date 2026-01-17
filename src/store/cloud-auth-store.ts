@@ -1,7 +1,7 @@
 import { StoreApi, create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { CloudAuthSlice, createCloudAuthSlice } from './cloud-auth-slice';
-import { indexedDbStateStorage } from './storage/IndexedDbStorage';
+import { indexedDbPersistStorage } from './storage/IndexedDbStorage';
 
 export type StoreState = CloudAuthSlice;
 
@@ -21,7 +21,7 @@ const useCloudAuthStore = create<StoreState>()(
         cloudSync: state.cloudSync,
         fileId: state.fileId,
       }),
-      storage: createJSONStorage(() => indexedDbStateStorage),
+      storage: indexedDbPersistStorage,
       version: 1,
     }
   )

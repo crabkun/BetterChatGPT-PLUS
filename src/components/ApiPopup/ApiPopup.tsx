@@ -10,7 +10,8 @@ const ApiPopup = () => {
 
   const apiKey = useStore((state) => state.apiKey);
   const setApiKey = useStore((state) => state.setApiKey);
-  const firstVisit = useStore((state) => state.firstVisit);
+  const apiKeyConfigured = useStore((state) => state.apiKeyConfigured);
+  const setApiKeyConfigured = useStore((state) => state.setApiKeyConfigured);
   const setFirstVisit = useStore((state) => state.setFirstVisit);
 
   const [_apiKey, _setApiKey] = useState<string>(apiKey || '');
@@ -26,6 +27,7 @@ const ApiPopup = () => {
     } else {
       setError('');
       setApiKey(_apiKey);
+      setApiKeyConfigured(true);
       setIsModalOpen(false);
     }
   };
@@ -33,14 +35,9 @@ const ApiPopup = () => {
   useEffect(() => {
     if (hasHydrated) {
       setFirstVisit(false);
+      setIsModalOpen(!apiKeyConfigured);
     }
-  }, [hasHydrated, setFirstVisit]);
-
-  useEffect(() => {
-    if (hasHydrated) {
-      setIsModalOpen(!apiKey && firstVisit);
-    }
-  }, [apiKey, firstVisit, hasHydrated]);
+  }, [apiKeyConfigured, hasHydrated, setFirstVisit]);
 
   useEffect(() => {
     if (hasHydrated) return;

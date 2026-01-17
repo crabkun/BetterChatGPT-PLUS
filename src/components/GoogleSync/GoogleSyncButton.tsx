@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useGStore from '@store/cloud-auth-store';
 import useStore from '@store/store';
-import { createJSONStorage } from 'zustand/middleware';
-import { indexedDbStateStorage } from '@store/storage/IndexedDbStorage';
+import { indexedDbPersistStorage } from '@store/storage/IndexedDbStorage';
 
 const GoogleSyncButton = ({ loginHandler }: { loginHandler?: () => void }) => {
   const { t } = useTranslation(['drive']);
@@ -43,7 +42,7 @@ const GoogleSyncButton = ({ loginHandler }: { loginHandler?: () => void }) => {
     setCloudSync(false);
     googleLogout();
     useStore.persist.setOptions({
-      storage: createJSONStorage(() => indexedDbStateStorage),
+      storage: indexedDbPersistStorage,
     });
     useStore.persist.rehydrate();
     setToastStatus('success');
