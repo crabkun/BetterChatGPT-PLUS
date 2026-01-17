@@ -8,6 +8,7 @@ import {
   ChatInterface,
   ContentInterface,
   ImageContentInterface,
+  ImageDetail,
   isImageContent,
   TextContentInterface,
 } from '@type/chat';
@@ -149,7 +150,7 @@ const EditView = ({
     setImageUrl('');
   };
 
-  const handleImageDetailChange = (contentIndex: number, detail: string) => {
+  const handleImageDetailChange = (contentIndex: number, detail: ImageDetail) => {
     const updatedImages = [..._content];
     const imageEntry = updatedImages[contentIndex] as ImageContentInterface | undefined;
     if (imageEntry && imageEntry.type === 'image_url') {
@@ -444,7 +445,7 @@ const EditViewButtons = memo(
   }: {
     sticky?: boolean;
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleImageDetailChange: (contentIndex: number, e: string) => void;
+    handleImageDetailChange: (contentIndex: number, e: ImageDetail) => void;
     handleRemoveImage: (contentIndex: number) => void;
     handleGenerate: () => void;
     handleSave: () => void;
@@ -484,7 +485,7 @@ const EditViewButtons = memo(
                     <div className='flex flex-row gap-3'>
                       <select
                         onChange={(event) =>
-                          handleImageDetailChange(index, event.target.value)
+                          handleImageDetailChange(index, event.target.value as ImageDetail)
                         }
                         title='Select image resolution'
                         aria-label='Select image resolution'

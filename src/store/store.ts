@@ -97,11 +97,12 @@ export const createPartializedState = (
 export const persistStoreSnapshot = async () => {
   const state = useStore.getState();
   const options = useStore.persist.getOptions();
+  const storageKey = options.name ?? 'free-chat-gpt';
   const payload = {
     state: createPartializedState(state),
     version: options.version ?? 0,
   };
-  await writePersistedState(options.name, payload);
+  await writePersistedState(storageKey, payload);
   if (state.chats) {
     await persistChatMessagesNow(state.chats);
   }
