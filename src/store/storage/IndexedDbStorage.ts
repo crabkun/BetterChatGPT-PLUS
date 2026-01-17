@@ -231,57 +231,43 @@ export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
   if (migrationFlag) return;
 
   const storageKey = 'free-chat-gpt';
-  const existing = await get<PersistMeta | undefined>(
-    getMetaKey(storageKey),
-    persistStore
-  );
-
-  if (!existing) {
-    const localValue = localStorage.getItem(storageKey);
-    if (localValue) {
-      try {
-        const parsed = JSON.parse(localValue) as StorageValue<{
-          chats?: ChatInterface[];
-        }>;
-        const parsedVersion =
-          typeof parsed.version === 'number' ? parsed.version : 0;
-        const migratedState = applyMigrations(parsed.state, parsedVersion) as {
-          chats?: ChatInterface[];
-        };
-        const normalizedChats = ensureChatIds(migratedState?.chats);
-        const normalizedState =
-          normalizedChats === migratedState?.chats
-            ? migratedState
-            : { ...migratedState, chats: normalizedChats };
-        const migrated = {
-          ...parsed,
-          state: normalizedState,
-          version: LATEST_PERSIST_VERSION,
-        };
-        await writePersistedState(storageKey, migrated);
-        if (normalizedChats) {
-          await persistChatMessagesNow(normalizedChats);
-        }
-      } catch (error) {
-        console.warn('Failed to parse localStorage state for migration.', error);
+  const localValue = localStorage.getItem(storageKey);
+  if (localValue) {
+    try {
+      const parsed = JSON.parse(localValue) as StorageValue<{
+        chats?: ChatInterface[];
+      }>;
+      const parsedVersion = typeof parsed.version === 'number' ? parsed.version : 0;
+      const migratedState = applyMigrations(parsed.state, parsedVersion) as {
+        chats?: ChatInterface[];
+      };
+      const normalizedChats = ensureChatIds(migratedState?.chats);
+      const normalizedState =
+        normalizedChats === migratedState?.chats
+          ? migratedState
+          : { ...migratedState, chats: normalizedChats };
+      const migrated = {
+        ...parsed,
+        state: normalizedState,
+        version: LATEST_PERSIST_VERSION,
+      };
+      await writePersistedState(storageKey, migrated);
+      if (normalizedChats) {
+        await persistChatMessagesNow(normalizedChats);
       }
+    } catch (error) {
+      console.warn('Failed to parse localStorage state for migration.', error);
     }
   }
 
   const cloudKey = 'cloud';
-  const existingCloud = await get<PersistMeta | undefined>(
-    getMetaKey(cloudKey),
-    persistStore
-  );
-  if (!existingCloud) {
-    const cloudValue = localStorage.getItem(cloudKey);
-    if (cloudValue) {
-      try {
-        const parsed = JSON.parse(cloudValue) as StorageValue<Record<string, unknown>>;
-        await writePersistedState(cloudKey, parsed);
-      } catch (error) {
-        console.warn('Failed to parse cloud localStorage state for migration.', error);
-      }
+  const cloudValue = localStorage.getItem(cloudKey);
+  if (cloudValue) {
+    try {
+      const parsed = JSON.parse(cloudValue) as StorageValue<Record<string, unknown>>;
+      await writePersistedState(cloudKey, parsed);
+    } catch (error) {
+      console.warn('Failed to parse cloud localStorage state for migration.', error);
     }
   }
 
