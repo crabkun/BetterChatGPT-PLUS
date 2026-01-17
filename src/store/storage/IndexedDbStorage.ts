@@ -217,61 +217,68 @@ export const syncChatsWithMessages = async (chats: ChatInterface[]) => {
   return hydratedChats;
 };
 
-let hasMigratedLocalStorage = false;
+let migrateLocalStoragePromise: Promise<void> | null = null;
 
 export const migrateLocalStorageToIndexedDbIfNeeded = async () => {
-  if (hasMigratedLocalStorage) return;
-  hasMigratedLocalStorage = true;
-  if (typeof localStorage === 'undefined') return;
+  if (migrateLocalStoragePromise) return migrateLocalStoragePromise;
+  migrateLocalStoragePromise = (async () => {
+    if (typeof localStorage === 'undefined') return;
 
-  const migrationFlag = await get<boolean | undefined>(
-    MIGRATION_FLAG_KEY,
-    persistStore
-  );
-  if (migrationFlag) return;
+    const migrationFlag = await get<boolean | undefined>(
+      MIGRATION_FLAG_KEY,
+      persistStore
+    );
+    if (migrationFlag) return;
 
-  const storageKey = 'free-chat-gpt';
-  const localValue = localStorage.getItem(storageKey);
-  if (localValue) {
-    try {
-      const parsed = JSON.parse(localValue) as StorageValue<{
-        chats?: ChatInterface[];
-      }>;
-      const parsedVersion = typeof parsed.version === 'number' ? parsed.version : 0;
-      const migratedState = applyMigrations(parsed.state, parsedVersion) as {
-        chats?: ChatInterface[];
-      };
-      const normalizedChats = ensureChatIds(migratedState?.chats);
-      const normalizedState =
-        normalizedChats === migratedState?.chats
-          ? migratedState
-          : { ...migratedState, chats: normalizedChats };
-      const migrated = {
-        ...parsed,
-        state: normalizedState,
-        version: LATEST_PERSIST_VERSION,
-      };
-      await writePersistedState(storageKey, migrated);
-      if (normalizedChats) {
-        await persistChatMessagesNow(normalizedChats);
+    const storageKey = 'free-chat-gpt';
+    const localValue = localStorage.getItem(storageKey);
+    if (localValue) {
+      try {
+        const parsed = JSON.parse(localValue) as StorageValue<{
+          chats?: ChatInterface[];
+        }>;
+        const parsedVersion = typeof parsed.version === 'number' ? parsed.version : 0;
+        const migratedState = applyMigrations(parsed.state, parsedVersion) as {
+          chats?: ChatInterface[];
+        };
+        const normalizedChats = ensureChatIds(migratedState?.chats);
+        const normalizedState =
+          normalizedChats === migratedState?.chats
+            ? migratedState
+            : { ...migratedState, chats: normalizedChats };
+        const migrated = {
+          ...parsed,
+          state: normalizedState,
+          version: LATEST_PERSIST_VERSION,
+        };
+        await writePersistedState(storageKey, migrated);
+        if (normalizedChats) {
+          await persistChatMessagesNow(normalizedChats);
+        }
+      } catch (error) {
+        console.warn('Failed to parse localStorage state for migration.', error);
       }
-    } catch (error) {
-      console.warn('Failed to parse localStorage state for migration.', error);
     }
-  }
 
-  const cloudKey = 'cloud';
-  const cloudValue = localStorage.getItem(cloudKey);
-  if (cloudValue) {
-    try {
-      const parsed = JSON.parse(cloudValue) as StorageValue<Record<string, unknown>>;
-      await writePersistedState(cloudKey, parsed);
-    } catch (error) {
-      console.warn('Failed to parse cloud localStorage state for migration.', error);
+    const cloudKey = 'cloud';
+    const cloudValue = localStorage.getItem(cloudKey);
+    if (cloudValue) {
+      try {
+        const parsed = JSON.parse(cloudValue) as StorageValue<Record<string, unknown>>;
+        await writePersistedState(cloudKey, parsed);
+      } catch (error) {
+        console.warn('Failed to parse cloud localStorage state for migration.', error);
+      }
     }
-  }
 
-  await set(MIGRATION_FLAG_KEY, true, persistStore);
+    await set(MIGRATION_FLAG_KEY, true, persistStore);
+  })();
+
+  try {
+    await migrateLocalStoragePromise;
+  } finally {
+    migrateLocalStoragePromise = null;
+  }
 };
 
 export const readPersistedState = async <S>(storageKey: string) => {
