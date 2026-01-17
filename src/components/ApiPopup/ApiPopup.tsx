@@ -14,9 +14,10 @@ const ApiPopup = () => {
   const setFirstVisit = useStore((state) => state.setFirstVisit);
 
   const [_apiKey, _setApiKey] = useState<string>(apiKey || '');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(
-    !apiKey && firstVisit
+  const [hasHydrated, setHasHydrated] = useState<boolean>(
+    useStore.persist.hasHydrated()
   );
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
   const handleConfirm = () => {
@@ -30,8 +31,26 @@ const ApiPopup = () => {
   };
 
   useEffect(() => {
-    setFirstVisit(false);
-  }, []);
+    if (hasHydrated) {
+      setFirstVisit(false);
+    }
+  }, [hasHydrated, setFirstVisit]);
+
+  useEffect(() => {
+    if (hasHydrated) {
+      setIsModalOpen(!apiKey && firstVisit);
+    }
+  }, [apiKey, firstVisit, hasHydrated]);
+
+  useEffect(() => {
+    if (hasHydrated) return;
+    const unsubscribe = useStore.persist.onFinishHydration(() => {
+      setHasHydrated(true);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [hasHydrated]);
 
   return isModalOpen ? (
     <PopupModal

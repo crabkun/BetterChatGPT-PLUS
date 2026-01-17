@@ -41,6 +41,7 @@ const ChatContent = () => {
       : 0
   );
   const advancedMode = useStore((state) => state.advancedMode);
+  const shareGPTEnabled = useStore((state) => state.shareGPTEnabled);
   const generating = useStore.getState().generating;
   const hideSideMenu = useStore((state) => state.hideSideMenu);
   const autoScroll = useStore((state) => state.autoScroll);
@@ -173,7 +174,7 @@ const ChatContent = () => {
             {useStore.getState().generating || (
               <div className='md:w-[calc(100%-50px)] flex gap-4 flex-wrap justify-center'>
                 <DownloadChat saveRef={saveRef} />
-                <ShareGPT />
+                {shareGPTEnabled && <ShareGPT />}
                 <CloneChat />
               </div>
             )}

@@ -5,6 +5,7 @@ import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useGStore from '@store/cloud-auth-store';
 import useStore from '@store/store';
 import { createJSONStorage } from 'zustand/middleware';
+import { indexedDbStateStorage } from '@store/storage/IndexedDbStorage';
 
 const GoogleSyncButton = ({ loginHandler }: { loginHandler?: () => void }) => {
   const { t } = useTranslation(['drive']);
@@ -42,7 +43,7 @@ const GoogleSyncButton = ({ loginHandler }: { loginHandler?: () => void }) => {
     setCloudSync(false);
     googleLogout();
     useStore.persist.setOptions({
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => indexedDbStateStorage),
     });
     useStore.persist.rehydrate();
     setToastStatus('success');

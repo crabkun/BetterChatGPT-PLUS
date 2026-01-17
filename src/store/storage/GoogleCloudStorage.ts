@@ -1,6 +1,7 @@
 import { PersistStorage, StorageValue, StateStorage } from 'zustand/middleware';
 import useCloudAuthStore from '@store/cloud-auth-store';
-import useStore from '@store/store';
+import useStore, { createPartializedState } from '@store/store';
+import { hydrateChatsWithMessages } from './IndexedDbStorage';
 import {
   deleteDriveFile,
   getDriveFile,
@@ -44,7 +45,21 @@ const createGoogleCloudStorage = <S>(): PersistStorage<S> | undefined => {
       const fileId = useCloudAuthStore.getState().fileId;
       if (!accessToken || !fileId) return;
 
-      const blob = new Blob([JSON.stringify(newValue)], {
+      const baseState = createPartializedState(useStore.getState(), {
+        includeMessages: true,
+      });
+      const hydratedChats = baseState.chats
+        ? await hydrateChatsWithMessages(baseState.chats)
+        : baseState.chats;
+      const fullState = {
+        ...baseState,
+        chats: hydratedChats,
+      };
+      const fullValue = {
+        ...newValue,
+        state: fullState,
+      };
+      const blob = new Blob([JSON.stringify(fullValue)], {
         type: 'application/json',
       });
       const file = new File([blob], 'better-chatgpt.json', {

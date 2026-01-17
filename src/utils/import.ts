@@ -73,7 +73,9 @@ const validateAndFixChatConfig = (config: ConfigInterface) => {
   if (!(typeof config.frequency_penalty === 'number')) return false;
 
   if (!config.model) config.model = defaultModel;
-  if (!modelOptions.includes(config.model)) return false;
+  if (!modelOptions.includes(config.model)) {
+    config.model = defaultModel;
+  }
 
   return true;
 };
@@ -281,6 +283,9 @@ export const convertOpenAIToBetterChatGPTFormat = (
             model: (openAIChatExport as any).model,
           }),
         };
+        if (config.model && !modelOptions.includes(config.model)) {
+          config.model = defaultModel;
+        }
 
         const result: ChatInterface = {
           id: uuidv4(),
@@ -354,6 +359,9 @@ export const convertOpenAIToBetterChatGPTFormat = (
       model: (openAIChatExport as any).model,
     }),
   };
+  if (config.model && !modelOptions.includes(config.model)) {
+    config.model = defaultModel;
+  }
 
   // Return the chat interface object
   return {

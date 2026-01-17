@@ -1,6 +1,7 @@
 import { listDriveFiles } from '@api/google-api';
 
 import useStore, { createPartializedState } from '@store/store';
+import { hydrateChatsWithMessages } from '@store/storage/IndexedDbStorage';
 import useCloudAuthStore from '@store/cloud-auth-store';
 
 export const getFiles = async (googleAccessToken: string) => {
@@ -24,8 +25,17 @@ export const getFileID = async (
   return driveFiles.files[0].id;
 };
 
-export const stateToFile = () => {
-  const partializedState = createPartializedState(useStore.getState());
+export const stateToFile = async () => {
+  const baseState = createPartializedState(useStore.getState(), {
+    includeMessages: true,
+  });
+  const hydratedChats = baseState.chats
+    ? await hydrateChatsWithMessages(baseState.chats)
+    : baseState.chats;
+  const partializedState = {
+    ...baseState,
+    chats: hydratedChats,
+  };
 
   const blob = new Blob([JSON.stringify(partializedState)], {
     type: 'application/json',

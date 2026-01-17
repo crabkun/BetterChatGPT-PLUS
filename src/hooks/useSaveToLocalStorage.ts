@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import useStore from '@store/store';
+import { persistChatMessagesNow } from '@store/storage/IndexedDbStorage';
 
 const useSaveToLocalStorage = () => {
   const chatsRef = useRef(useStore.getState().chats);
@@ -8,7 +9,9 @@ const useSaveToLocalStorage = () => {
     const unsubscribe = useStore.subscribe((state) => {
       if (chatsRef && chatsRef.current !== state.chats) {
         chatsRef.current = state.chats;
-        localStorage.setItem('chats', JSON.stringify(state.chats));
+        if (state.chats) {
+          void persistChatMessagesNow(state.chats);
+        }
       }
     });
 

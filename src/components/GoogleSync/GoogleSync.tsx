@@ -49,7 +49,7 @@ const GoogleSync = ({ clientId }: { clientId: string }) => {
           if (_files.length === 0) {
             // _files is empty, create new file in google drive and set the file id
             const googleFile = await createDriveFile(
-              stateToFile(),
+              await stateToFile(),
               _googleAccessToken
             );
             setFileId(googleFile.id);
@@ -133,7 +133,7 @@ const GooglePopup = ({
     if (!googleAccessToken) return;
     try {
       setSyncStatus('syncing');
-      await createDriveFile(stateToFile(), googleAccessToken);
+      await createDriveFile(await stateToFile(), googleAccessToken);
       const _files = await getFiles(googleAccessToken);
       if (_files) setFiles(_files);
       setSyncStatus('synced');

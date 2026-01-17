@@ -29,52 +29,65 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // legacy local storage
-    const oldChats = localStorage.getItem('chats');
-    const apiKey = localStorage.getItem('apiKey');
-    const theme = localStorage.getItem('theme');
-
-    if (apiKey) {
+    let hasRun = false;
+    const handleHydration = () => {
+      if (hasRun) return;
+      hasRun = true;
       // legacy local storage
-      setApiKey(apiKey);
-      localStorage.removeItem('apiKey');
-    }
+      const oldChats = localStorage.getItem('chats');
+      const apiKey = localStorage.getItem('apiKey');
+      const theme = localStorage.getItem('theme');
 
-    if (theme) {
-      // legacy local storage
-      setTheme(theme as Theme);
-      localStorage.removeItem('theme');
-    }
+      if (apiKey) {
+        // legacy local storage
+        setApiKey(apiKey);
+        localStorage.removeItem('apiKey');
+      }
 
-    if (oldChats) {
-      // legacy local storage
-      try {
-        const chats: ChatInterface[] = JSON.parse(oldChats);
-        if (chats.length > 0) {
-          setChats(chats);
-          setCurrentChatIndex(0);
-        } else {
+      if (theme) {
+        // legacy local storage
+        setTheme(theme as Theme);
+        localStorage.removeItem('theme');
+      }
+
+      if (oldChats) {
+        // legacy local storage
+        try {
+          const chats: ChatInterface[] = JSON.parse(oldChats);
+          if (chats.length > 0) {
+            setChats(chats);
+            setCurrentChatIndex(0);
+          } else {
+            initialiseNewChat();
+          }
+        } catch (e: unknown) {
+          console.log(e);
           initialiseNewChat();
         }
-      } catch (e: unknown) {
-        console.log(e);
-        initialiseNewChat();
+        localStorage.removeItem('chats');
+      } else {
+        // existing storage
+        const chats = useStore.getState().chats;
+        const currentChatIndex = useStore.getState().currentChatIndex;
+        if (!chats || chats.length === 0) {
+          initialiseNewChat();
+        }
+        if (
+          chats &&
+          !(currentChatIndex >= 0 && currentChatIndex < chats.length)
+        ) {
+          setCurrentChatIndex(0);
+        }
       }
-      localStorage.removeItem('chats');
-    } else {
-      // existing local storage
-      const chats = useStore.getState().chats;
-      const currentChatIndex = useStore.getState().currentChatIndex;
-      if (!chats || chats.length === 0) {
-        initialiseNewChat();
-      }
-      if (
-        chats &&
-        !(currentChatIndex >= 0 && currentChatIndex < chats.length)
-      ) {
-        setCurrentChatIndex(0);
-      }
+    };
+
+    if (useStore.persist.hasHydrated()) {
+      handleHydration();
     }
+    const unsubscribe = useStore.persist.onFinishHydration(handleHydration);
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (

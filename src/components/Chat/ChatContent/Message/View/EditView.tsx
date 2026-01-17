@@ -34,21 +34,17 @@ const EditView = ({
   const setCurrentChatIndex = useStore((state) => state.setCurrentChatIndex);
   const inputRole = useStore((state) => state.inputRole);
   const setChats = useStore((state) => state.setChats);
-  var currentChatIndex = useStore((state) => state.currentChatIndex);
-  const model = useStore((state) => {
-    const isInitialised =
-      state.chats &&
-      state.chats.length > 0 &&
-      state.currentChatIndex >= 0 &&
-      state.currentChatIndex < state.chats.length;
-    if (!isInitialised) {
-      currentChatIndex = 0;
-      setCurrentChatIndex(0);
-    }
-    return isInitialised
-      ? state.chats![state.currentChatIndex].config.model
-      : defaultModel;
-  });
+  const currentChatIndex = useStore((state) => state.currentChatIndex);
+  const chats = useStore((state) => state.chats);
+  const isInitialised =
+    chats &&
+    chats.length > 0 &&
+    currentChatIndex >= 0 &&
+    currentChatIndex < chats.length;
+  const safeChatIndex = isInitialised ? currentChatIndex : 0;
+  const model = isInitialised
+    ? chats![currentChatIndex].config.model
+    : defaultModel;
 
   const [_content, _setContent] = useState<ContentInterface[]>(content);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -56,6 +52,12 @@ const EditView = ({
   const textareaRef = React.createRef<HTMLTextAreaElement>();
 
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!isInitialised) {
+      setCurrentChatIndex(0);
+    }
+  }, [isInitialised, setCurrentChatIndex]);
 
   const resetTextAreaHeight = () => {
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -105,7 +107,7 @@ const EditView = ({
     const updatedChats: ChatInterface[] = JSON.parse(
       JSON.stringify(useStore.getState().chats)
     );
-    const chat = updatedChats[currentChatIndex];
+    const chat = updatedChats[safeChatIndex];
     const files = e.target.files!;
     const newImageURLs = Array.from(files).map((file: Blob) =>
       URL.createObjectURL(file)
@@ -132,7 +134,7 @@ const EditView = ({
     const updatedChats: ChatInterface[] = JSON.parse(
       JSON.stringify(useStore.getState().chats)
     );
-    const chat = updatedChats[currentChatIndex];
+    const chat = updatedChats[safeChatIndex];
     const newImage: ImageContentInterface = {
       type: 'image_url',
       image_url: {
@@ -176,7 +178,7 @@ const EditView = ({
     const updatedChats: ChatInterface[] = JSON.parse(
       JSON.stringify(useStore.getState().chats)
     );
-    const updatedMessages = updatedChats[currentChatIndex].messages;
+    const updatedMessages = updatedChats[safeChatIndex].messages;
 
     if (sticky) {
       updatedMessages.push({ role: inputRole, content: _content });
@@ -241,7 +243,7 @@ const EditView = ({
     const updatedChats: ChatInterface[] = JSON.parse(
       JSON.stringify(useStore.getState().chats)
     );
-    const updatedMessages = updatedChats[currentChatIndex].messages;
+    const updatedMessages = updatedChats[safeChatIndex].messages;
 
     if (sticky) {
       if (hasTextContent || hasImageContent) {
@@ -256,7 +258,7 @@ const EditView = ({
       resetTextAreaHeight();
     } else {
       updatedMessages[messageIndex].content = _content;
-      updatedChats[currentChatIndex].messages = updatedMessages.slice(
+      updatedChats[safeChatIndex].messages = updatedMessages.slice(
         0,
         messageIndex + 1
       );
@@ -307,7 +309,7 @@ const EditView = ({
     const updatedChats: ChatInterface[] = JSON.parse(
       JSON.stringify(useStore.getState().chats)
     );
-    const chat = updatedChats[currentChatIndex];
+    const chat = updatedChats[safeChatIndex];
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         const blob = item.getAsFile();

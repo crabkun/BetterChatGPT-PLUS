@@ -1,6 +1,10 @@
 import { StoreSlice } from './store';
 import { ChatInterface, FolderCollection, MessageInterface } from '@type/chat';
 import { toast } from 'react-toastify';
+import {
+  deleteChatMessages,
+  persistChatMessagesNow,
+} from './storage/IndexedDbStorage';
 
 export interface ChatSlice {
   messages: MessageInterface[];
@@ -32,10 +36,21 @@ export const createChatSlice: StoreSlice<ChatSlice> = (set, get) => {
     },
     setChats: (chats: ChatInterface[]) => {
       try {
+        const previousChats = get().chats || [];
+        const previousIds = new Set(previousChats.map((chat) => chat.id));
+        const nextIds = new Set(chats.map((chat) => chat.id));
+        const removedIds = Array.from(previousIds).filter(
+          (id) => !nextIds.has(id)
+        );
+
         set((prev: ChatSlice) => ({
           ...prev,
           chats: chats,
         }));
+        if (removedIds.length > 0) {
+          void deleteChatMessages(removedIds);
+        }
+        void persistChatMessagesNow(chats);
       } catch (e: unknown) {
         // Notify if storage quota exceeded
         toast((e as Error).message);

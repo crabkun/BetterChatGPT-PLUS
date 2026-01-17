@@ -1,5 +1,5 @@
 import { StoreApi, create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { ChatSlice, createChatSlice } from './chat-slice';
 import { InputSlice, createInputSlice } from './input-slice';
 import { AuthSlice, createAuthSlice } from './auth-slice';
@@ -33,6 +33,12 @@ import {
   migrateV8_1_fix,
   migrateV8_2,
 } from './migrate';
+import {
+  indexedDbStateStorage,
+  persistChatMessagesNow,
+  writePersistedState,
+  syncChatsWithMessages,
+} from './storage/IndexedDbStorage';
 
 export type StoreState = ChatSlice &
   InputSlice &
@@ -47,8 +53,19 @@ export type StoreSlice<T> = (
   get: StoreApi<StoreState>['getState']
 ) => T;
 
-export const createPartializedState = (state: StoreState) => ({
-  chats: state.chats,
+export const stripChatMessages = (chats?: ChatSlice['chats']) =>
+  chats
+    ? chats.map(({ messages, ...rest }) => ({
+        ...rest,
+        messages: [],
+      }))
+    : chats;
+
+export const createPartializedState = (
+  state: StoreState,
+  options?: { includeMessages?: boolean }
+) => ({
+  chats: options?.includeMessages ? state.chats : stripChatMessages(state.chats),
   currentChatIndex: state.currentChatIndex,
   apiKey: state.apiKey,
   apiVersion: state.apiVersion,
@@ -72,8 +89,22 @@ export const createPartializedState = (state: StoreState) => ({
   menuWidth: state.menuWidth,
   defaultImageDetail: state.defaultImageDetail,
   autoScroll: state.autoScroll,
+  shareGPTEnabled: state.shareGPTEnabled,
   customModels: state.customModels,
 });
+
+export const persistStoreSnapshot = async () => {
+  const state = useStore.getState();
+  const options = useStore.persist.getOptions();
+  const payload = {
+    state: createPartializedState(state),
+    version: options.version ?? 0,
+  };
+  await writePersistedState(options.name, payload);
+  if (state.chats) {
+    await persistChatMessagesNow(state.chats);
+  }
+};
 
 const useStore = create<StoreState>()(
   persist(
@@ -89,6 +120,7 @@ const useStore = create<StoreState>()(
     {
       name: 'free-chat-gpt',
       partialize: (state) => createPartializedState(state),
+      storage: createJSONStorage(() => indexedDbStateStorage),
       version: 9,
       migrate: (persistedState, version) => {
         switch (version) {
@@ -117,6 +149,17 @@ const useStore = create<StoreState>()(
             break;
         }
         return persistedState as StoreState;
+      },
+      onRehydrateStorage: () => async (state, error) => {
+        if (error || !state?.chats) {
+          return;
+        }
+        try {
+          const hydratedChats = await syncChatsWithMessages(state.chats);
+          state.setChats(hydratedChats);
+        } catch (e) {
+          console.error('Failed to hydrate chats from IndexedDB.', e);
+        }
       },
     }
   )
