@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
 import useStore from '@store/store';
 
@@ -29,6 +30,8 @@ const CloneChat = React.memo(() => {
 
       const clonedChat = JSON.parse(JSON.stringify(chats[index]));
       clonedChat.title = title;
+      clonedChat.id = uuidv4();
+      clonedChat.titleSet = true;
 
       const updatedChats: ChatInterface[] = JSON.parse(JSON.stringify(chats));
       updatedChats.unshift(clonedChat);

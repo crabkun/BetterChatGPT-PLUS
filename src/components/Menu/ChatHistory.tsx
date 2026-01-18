@@ -8,6 +8,7 @@ import DeleteIcon from '@icon/DeleteIcon';
 import EditIcon from '@icon/EditIcon';
 import CloneIcon from '@icon/CloneIcon';
 import TickIcon from '@icon/TickIcon';
+import { v4 as uuidv4 } from 'uuid';
 import useStore from '@store/store';
 import { formatNumber } from '@utils/chat';
 import { ChatInterface } from '@type/chat';
@@ -146,6 +147,8 @@ const ChatHistory = React.memo(
 
         const clonedChat = JSON.parse(JSON.stringify(chats[index]));
         clonedChat.title = title;
+        clonedChat.id = uuidv4();
+        clonedChat.titleSet = true;
 
         const updatedChats: ChatInterface[] = JSON.parse(JSON.stringify(chats));
         updatedChats.unshift(clonedChat);
