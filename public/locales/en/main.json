@@ -57,5 +57,30 @@
   "reasoning": {
     "inProgress": "Deep thinking... (elapsed: {{seconds}}s)",
     "completed": "Deep thinking complete... (total: {{seconds}}s)"
+  },
+  "googleDriveSync": {
+    "title": "Google Drive Sync",
+    "syncToCloud": "Sync to Cloud",
+    "syncFromCloud": "Sync from Cloud",
+    "syncToCloudSuccess": "Successfully synced to Google Drive",
+    "syncFromCloudSuccess": "Successfully synced from Google Drive",
+    "syncToCloudError": "Failed to sync to Google Drive",
+    "syncFromCloudError": "Failed to sync from Google Drive",
+    "syncToCloudWarning": "This will overwrite the existing sync file on Google Drive with your current local data. Continue?",
+    "syncFromCloudWarning": "This will clear all local conversations and replace them with cloud data. Continue?",
+    "syncing": "Syncing...",
+    "noFileFound": "No sync file found on Google Drive",
+    "authError": "Google authentication failed",
+    "clientIdLabel": "Google OAuth Client ID",
+    "clientIdPlaceholder": "Enter your Google OAuth Client ID",
+    "setupGuideTitle": "📋 How to get a Client ID? (click to expand)",
+    "step1": "Go to Google Cloud Console and create a new project.",
+    "step2": "Enable the Google Drive API: APIs & Services → Library → search 'Google Drive API' → Enable.",
+    "step3": "Configure the OAuth consent screen: set to 'External', then add your Google account as a test user.",
+    "step4": "Create an OAuth 2.0 Client ID: APIs & Services → Credentials → Create Credentials → OAuth Client ID → select 'Web application'.",
+    "step5": "Add your site URL (e.g. http://localhost:5173) to 'Authorized JavaScript origins', then copy the Client ID.",
+    "clientIdLocalNote": "Your Client ID is stored locally in this browser only.",
+    "clientIdRequired": "Please enter your Google OAuth Client ID first",
+    "storageLocationHint": "Sync file is saved to Google Drive's hidden Application Data folder (only accessible by this app). The filename is betterchatgpt-sync.json."
   }
 }

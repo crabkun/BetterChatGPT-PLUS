@@ -5,6 +5,7 @@ import Api from './Api';
 import Me from './Me';
 import AboutMenu from '@components/AboutMenu';
 import ImportExportChat from '@components/ImportExportChat';
+import GoogleDriveSync from '@components/GoogleDriveSync';
 import SettingsMenu from '@components/SettingsMenu';
 import CollapseOptions from './CollapseOptions';
 import { TotalTokenCostDisplay } from '@components/SettingsMenu/TotalTokenCost';
@@ -22,6 +23,7 @@ const MenuOptions = () => {
         {countTotalTokens && <TotalTokenCostDisplay />}
         <AboutMenu />
         <ImportExportChat />
+        <GoogleDriveSync />
         <Api />
         <SettingsMenu />
         <Me />

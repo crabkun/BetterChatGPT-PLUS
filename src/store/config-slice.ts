@@ -1,6 +1,6 @@
 import { StoreSlice } from './store';
 import { Theme } from '@type/theme';
-import { _defaultChatConfig, _defaultSystemMessage,_defaultMenuWidth, defaultModel, _defaultImageDetail, _defaultDisplayChatSize } from '@constants/chat';
+import { _defaultChatConfig, _defaultSystemMessage, _defaultMenuWidth, defaultModel, _defaultImageDetail, _defaultDisplayChatSize } from '@constants/chat';
 import { ConfigInterface, ImageDetail, TotalTokenUsed } from '@type/chat';
 import { ModelOptions } from '@utils/modelReader';
 
@@ -24,6 +24,7 @@ export interface ConfigSlice {
   defaultImageDetail: ImageDetail;
   autoScroll: boolean;
   shareGPTEnabled: boolean;
+  googleClientId: string;
   setOpenConfig: (openConfig: boolean) => void;
   setTheme: (theme: Theme) => void;
   setAutoTitle: (autoTitle: boolean) => void;
@@ -43,6 +44,7 @@ export interface ConfigSlice {
   setDefaultImageDetail: (imageDetail: ImageDetail) => void;
   setAutoScroll: (autoScroll: boolean) => void;
   setShareGPTEnabled: (shareGPTEnabled: boolean) => void;
+  setGoogleClientId: (googleClientId: string) => void;
 }
 
 export const createConfigSlice: StoreSlice<ConfigSlice> = (set, get) => ({
@@ -65,6 +67,7 @@ export const createConfigSlice: StoreSlice<ConfigSlice> = (set, get) => ({
   defaultImageDetail: _defaultImageDetail,
   autoScroll: true,
   shareGPTEnabled: false,
+  googleClientId: '',
   setOpenConfig: (openConfig: boolean) => {
     set((prev: ConfigSlice) => ({
       ...prev,
@@ -177,6 +180,12 @@ export const createConfigSlice: StoreSlice<ConfigSlice> = (set, get) => ({
     set((prev: ConfigSlice) => ({
       ...prev,
       shareGPTEnabled: shareGPTEnabled,
+    }));
+  },
+  setGoogleClientId: (googleClientId: string) => {
+    set((prev: ConfigSlice) => ({
+      ...prev,
+      googleClientId: googleClientId,
     }));
   },
 });

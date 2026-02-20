@@ -66,6 +66,7 @@ export const createPartializedState = (
   autoScroll: state.autoScroll,
   shareGPTEnabled: state.shareGPTEnabled,
   customModels: state.customModels,
+  googleClientId: state.googleClientId,
 });
 
 export const persistStoreSnapshot = async () => {

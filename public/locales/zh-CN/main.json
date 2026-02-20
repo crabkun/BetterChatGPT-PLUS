@@ -57,5 +57,30 @@
   "reasoning": {
     "inProgress": "深度思考中...（已耗时：{{seconds}}秒）",
     "completed": "深度思考完成...（共耗时：{{seconds}}秒）"
+  },
+  "googleDriveSync": {
+    "title": "Google Drive 同步",
+    "syncToCloud": "同步到云端",
+    "syncFromCloud": "从云端同步",
+    "syncToCloudSuccess": "已成功同步到 Google Drive",
+    "syncFromCloudSuccess": "已成功从 Google Drive 同步",
+    "syncToCloudError": "同步到 Google Drive 失败",
+    "syncFromCloudError": "从 Google Drive 同步失败",
+    "syncToCloudWarning": "此操作将用当前本地数据覆盖云端已有的同步文件，是否继续？",
+    "syncFromCloudWarning": "此操作将清空所有本地对话并替换为云端数据，是否继续？",
+    "syncing": "同步中...",
+    "noFileFound": "Google Drive 上未找到同步文件",
+    "authError": "Google 身份验证失败",
+    "clientIdLabel": "Google OAuth 客户端 ID",
+    "clientIdPlaceholder": "输入你的 Google OAuth 客户端 ID",
+    "setupGuideTitle": "📋 如何获取客户端 ID？（点击展开）",
+    "step1": "前往 Google Cloud Console 创建一个新项目。",
+    "step2": "启用 Google Drive API：API 和服务 → 库 → 搜索「Google Drive API」→ 启用。",
+    "step3": "配置 OAuth 同意屏幕：选择「外部」，然后将你的 Google 账号添加为测试用户。",
+    "step4": "创建 OAuth 2.0 客户端 ID：API 和服务 → 凭据 → 创建凭据 → OAuth 客户端 ID → 选择「Web 应用」类型。",
+    "step5": "将你的网站地址（如 http://localhost:5173）添加到「已获授权的 JavaScript 来源」中，然后复制客户端 ID。",
+    "clientIdLocalNote": "客户端 ID 仅存储在本浏览器中，不会上传到任何服务器。",
+    "clientIdRequired": "请先输入你的 Google OAuth 客户端 ID",
+    "storageLocationHint": "同步文件保存在 Google Drive 的隐藏应用数据文件夹中（仅本应用可访问），文件名为 betterchatgpt-sync.json。"
   }
 }
