@@ -31,9 +31,9 @@ export type StoreSlice<T> = (
 export const stripChatMessages = (chats?: ChatSlice['chats']) =>
   chats
     ? chats.map(({ messages, ...rest }) => ({
-        ...rest,
-        messages: [],
-      }))
+      ...rest,
+      messages: [],
+    }))
     : chats;
 
 export const createPartializedState = (
@@ -44,7 +44,6 @@ export const createPartializedState = (
   currentChatIndex: state.currentChatIndex,
   apiKey: state.apiKey,
   apiKeyConfigured: state.apiKeyConfigured,
-  apiVersion: state.apiVersion,
   apiEndpoint: state.apiEndpoint,
   theme: state.theme,
   autoTitle: state.autoTitle,

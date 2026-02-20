@@ -1,0 +1,9 @@
+{
+    "migration": {
+        "confirmTitle": "确认迁移",
+        "confirmMessage": "如果您因消息格式较旧而遇到问题，运行此迁移将把消息更新为最新格式。这有助于修复问题并改善您的使用体验。是否继续？",
+        "resetVersionButton": "重置版本并迁移",
+        "resetVersionDescription": "这将把版本重置为 8 并触发数据迁移。",
+        "noPersistedState": "未找到已保存的数据，无法重置版本。"
+    }
+}

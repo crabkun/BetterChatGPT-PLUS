@@ -9,7 +9,19 @@
     "howTo": "在<0>此处</0>获取您的个人 API 密钥。",
     "inputLabel": "API 密钥"
   },
+  "apiVersion": {
+    "inputLabel": "API 版本",
+    "description": "API 版本，例如 2024-04-01-preview"
+  },
   "customEndpoint": "使用自定义 API 端点",
   "advancedConfig": "在<0>此处</0>查看进阶 API 设置",
-  "noApiKeyWarning": "缺少 API key，请检查 API 设置。"
+  "noApiKeyWarning": "缺少 API key，请检查 API 设置。",
+  "errors": {
+    "errorGeneratingTitle": "生成标题时出错！",
+    "noMessagesSubmitted": "未提交任何消息！",
+    "failedToRetrieveData": "无法获取有效的聊天数据。",
+    "streamLocked": "抱歉，数据流当前已锁定。请重试。",
+    "cancelledByUser": "已被用户取消",
+    "generationCompleted": "生成完成"
+  }
 }

@@ -13,7 +13,6 @@ import { getChatCompletion, getChatCompletionStream } from '@api/api';
 import { parseEventSource } from '@api/helper';
 import { updateTotalTokenUsed } from '@utils/messageUtils';
 import { _defaultChatConfig } from '@constants/chat';
-import { officialAPIEndpoint } from '@constants/auth';
 import { modelStreamSupport } from '@constants/modelLoader';
 
 const useSubmit = () => {
@@ -105,39 +104,16 @@ const useSubmit = () => {
   ): Promise<string> => {
     let data;
     try {
-      if (!apiKey || apiKey.length === 0) {
-        // official endpoint
-        if (apiEndpoint === officialAPIEndpoint) {
-          throw new Error(t('noApiKeyWarning') as string);
-        }
-        const titleChatConfig = {
-          ..._defaultChatConfig, // Spread the original config
-          model: useStore.getState().titleModel ?? _defaultChatConfig.model, // Override the model property
-        };
-        // other endpoints
-        data = await getChatCompletion(
-          useStore.getState().apiEndpoint,
-          message,
-          titleChatConfig,
-          undefined,
-          undefined,
-          useStore.getState().apiVersion
-        );
-      } else if (apiKey) {
-        const titleChatConfig = {
-          ...modelConfig, // Spread the original config
-          model: useStore.getState().titleModel ?? modelConfig.model, // Override the model property
-        };
-        // own apikey
-        data = await getChatCompletion(
-          useStore.getState().apiEndpoint,
-          message,
-          titleChatConfig,
-          apiKey,
-          undefined,
-          useStore.getState().apiVersion
-        );
-      }
+      const titleChatConfig = {
+        ...(apiKey ? modelConfig : _defaultChatConfig),
+        model: useStore.getState().titleModel ?? (apiKey ? modelConfig : _defaultChatConfig).model,
+      };
+      data = await getChatCompletion(
+        useStore.getState().apiEndpoint,
+        message,
+        titleChatConfig,
+        apiKey || undefined,
+      );
     } catch (error: unknown) {
       throw new Error(
         `${t('errors.errorGeneratingTitle')}\n${(error as Error).message}`
@@ -184,30 +160,12 @@ const useSubmit = () => {
         chats[currentChatIndex].messages
       );
       if (!isStreamSupported) {
-        if (!apiKey || apiKey.length === 0) {
-          // official endpoint
-          if (apiEndpoint === officialAPIEndpoint) {
-            throw new Error(t('noApiKeyWarning') as string);
-          }
-          // other endpoints
-          data = await getChatCompletion(
-            useStore.getState().apiEndpoint,
-            messages,
-            chats[currentChatIndex].config,
-            undefined,
-            undefined,
-            useStore.getState().apiVersion
-          );
-        } else if (apiKey) {
-          data = await getChatCompletion(
-            useStore.getState().apiEndpoint,
-            messages,
-            chats[currentChatIndex].config,
-            apiKey,
-            undefined,
-            useStore.getState().apiVersion
-          );
-        }
+        data = await getChatCompletion(
+          useStore.getState().apiEndpoint,
+          messages,
+          chats[currentChatIndex].config,
+          apiKey || undefined,
+        );
 
         if (
           !data ||
@@ -254,33 +212,12 @@ const useSubmit = () => {
         }
         setChats(updatedChats);
       } else {
-        // no api key (free)
-        if (!apiKey || apiKey.length === 0) {
-          // official endpoint
-          if (apiEndpoint === officialAPIEndpoint) {
-            throw new Error(t('noApiKeyWarning') as string);
-          }
-
-          // other endpoints
-          stream = await getChatCompletionStream(
-            useStore.getState().apiEndpoint,
-            messages,
-            chats[currentChatIndex].config,
-            undefined,
-            undefined,
-            useStore.getState().apiVersion
-          );
-        } else if (apiKey) {
-          // own apikey
-          stream = await getChatCompletionStream(
-            useStore.getState().apiEndpoint,
-            messages,
-            chats[currentChatIndex].config,
-            apiKey,
-            undefined,
-            useStore.getState().apiVersion
-          );
-        }
+        stream = await getChatCompletionStream(
+          useStore.getState().apiEndpoint,
+          messages,
+          chats[currentChatIndex].config,
+          apiKey || undefined,
+        );
 
         if (stream) {
           if (stream.locked)
@@ -380,40 +317,40 @@ const useSubmit = () => {
                   output: { content: string; reasoning: string; hasContent: boolean },
                   curr
                 ) => {
-                if (typeof curr === 'string') {
-                  partial += curr;
-                } else {
-                  if (!curr.choices || !curr.choices[0] || !curr.choices[0].delta) {
-                    // cover the case where we get some element which doesnt have text data, e.g. usage stats
-                    return output;
-                  }
-                  const content = curr.choices[0]?.delta?.content ?? null;
-                  const reasoningContent =
-                    curr.choices[0]?.delta?.reasoning_content ?? null;
-                  if (reasoningContent) {
-                    output.reasoning += reasoningContent;
-                    if (!reasoningStart) {
-                      reasoningStart = Date.now();
+                  if (typeof curr === 'string') {
+                    partial += curr;
+                  } else {
+                    if (!curr.choices || !curr.choices[0] || !curr.choices[0].delta) {
+                      // cover the case where we get some element which doesnt have text data, e.g. usage stats
+                      return output;
                     }
-                  }
-                  if (content) {
-                    const parsed = processThinkChunk(content, thinkState);
-                    if (parsed.reasoning) {
-                      output.reasoning += parsed.reasoning;
+                    const content = curr.choices[0]?.delta?.content ?? null;
+                    const reasoningContent =
+                      curr.choices[0]?.delta?.reasoning_content ?? null;
+                    if (reasoningContent) {
+                      output.reasoning += reasoningContent;
                       if (!reasoningStart) {
                         reasoningStart = Date.now();
                       }
                     }
-                    if (parsed.content) {
-                      output.content += parsed.content;
-                      output.hasContent = true;
+                    if (content) {
+                      const parsed = processThinkChunk(content, thinkState);
+                      if (parsed.reasoning) {
+                        output.reasoning += parsed.reasoning;
+                        if (!reasoningStart) {
+                          reasoningStart = Date.now();
+                        }
+                      }
+                      if (parsed.content) {
+                        output.content += parsed.content;
+                        output.hasContent = true;
+                      }
                     }
                   }
-                }
-                return output;
-              },
-              { content: '', reasoning: '', hasContent: false }
-            );
+                  return output;
+                },
+                { content: '', reasoning: '', hasContent: false }
+              );
 
               applyStreamResultStrings(resultStrings);
             }

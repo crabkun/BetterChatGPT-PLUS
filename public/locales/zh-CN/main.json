@@ -1,6 +1,8 @@
 ﻿{
   "save": "保存",
   "generate": "生成",
+  "add_image_url": "添加图片 URL",
+  "enter_image_url_placeholder": "输入图片 URL",
   "cancel": "取消",
   "confirm": "确认",
   "warning": "警告",
@@ -33,6 +35,8 @@
   "total": "合计",
   "resetCost": "重置费用",
   "countTotalTokens": "计算总 Token 数",
+  "displayChatSize": "在标题中显示聊天大小",
+  "defaultImageDetail": "图片精度（自动、高、低分辨率）",
   "morePrompts": "更多提示词请点击：",
   "clearPrompts": "清除提示词",
   "postOnShareGPT": {
@@ -43,12 +47,15 @@
   "cloneChat": "创建聊天副本",
   "cloned": "已创建副本",
   "enterToSubmit": "按回车键提交",
+  "autoScroll": "自动滚动到底部",
   "enableShareGPT": "启用 ShareGPT",
   "submitPlaceholder": "输入消息或点击 [/] 以使用提示词…",
+  "stopNonStreamGenerationWarning": "不建议中止非流式模型的生成。仅在界面卡住时使用。是否继续？",
+  "reduceMessagesFailedImportWarning": "完整导入失败，因为数据超出了最大存储限制。是否尽可能多地导入？",
+  "partialImportWarning": "完整导入失败，因为并非所有预期的消息都已导入：{{message}}。是否仍然导入？",
+  "reduceMessagesSuccess": "消息已成功精简。共移除了 {{count}} 条消息。",
   "reasoning": {
     "inProgress": "深度思考中...（已耗时：{{seconds}}秒）",
     "completed": "深度思考完成...（共耗时：{{seconds}}秒）"
   }
-
 }
-

@@ -22,7 +22,37 @@
     "label": "频率惩罚",
     "description": "数值在 -2.0 到 2.0 之间。正值会根据新 token 在文本中的现有频率来惩罚它们，降低模型直接重复相同语句的可能性。(默认: 0)"
   },
+  "modelTitleGeneration": "标题生成模型",
   "defaultChatConfig": "默认聊天配置",
   "defaultSystemMessage": "默认系统消息",
-  "resetToDefault": "重置为默认值"
+  "resetToDefault": "重置为默认值",
+  "imageDetail": {
+    "label": "图片精度",
+    "low": "低",
+    "high": "高",
+    "auto": "自动"
+  },
+  "customModels": {
+    "title": "自定义模型",
+    "addModel": "添加模型",
+    "modelId": "模型 ID（例如 gpt4）",
+    "modelName": "模型名称",
+    "modality": "模型类型",
+    "textOnly": "仅文本",
+    "textAndImage": "文本 + 图片",
+    "yourCustomModels": "已添加的自定义模型",
+    "noModels": "尚未添加自定义模型",
+    "remove": "删除",
+    "advancedSettings": "高级设置",
+    "showAdvanced": "显示高级设置",
+    "hideAdvanced": "隐藏高级设置",
+    "pricing": "定价（美元）",
+    "promptPrice": "提示词价格（每 token）",
+    "completionPrice": "补全价格（每 token）",
+    "imagePrice": "图片价格（每张）",
+    "requestPrice": "请求基础价格",
+    "customLabel": "（自定义）",
+    "streamSupported": "流式输出",
+    "streamSupportedDescription": "启用流式传输以实时生成回复"
+  }
 }

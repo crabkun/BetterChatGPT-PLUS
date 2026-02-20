@@ -25,7 +25,6 @@ import {
   defaultModel,
   _defaultImageDetail,
 } from '@constants/chat';
-import { officialAPIEndpoint } from '@constants/auth';
 import defaultPrompts from '@constants/prompt';
 
 export const LATEST_PERSIST_VERSION = 9;
@@ -52,7 +51,7 @@ export const migrateV1 = (persistedState: LocalStorageInterfaceV1ToV2) => {
   if (persistedState.apiFree) {
     persistedState.apiEndpoint = persistedState.apiFreeEndpoint;
   } else {
-    persistedState.apiEndpoint = officialAPIEndpoint;
+    persistedState.apiEndpoint = '';
   }
 };
 
