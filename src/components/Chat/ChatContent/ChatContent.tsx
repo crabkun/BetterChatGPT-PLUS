@@ -3,6 +3,7 @@ import ScrollToBottom from 'react-scroll-to-bottom';
 import useStore from '@store/store';
 
 import ScrollToBottomButton from './ScrollToBottomButton';
+import ScrollPositionManager from './ScrollPositionManager';
 import ChatTitle from './ChatTitle';
 import Message from './Message';
 import NewMessageButton from './Message/NewMessageButton';
@@ -19,20 +20,21 @@ const ChatContent = () => {
   const setError = useStore((state) => state.setError);
   const messages = useStore((state) =>
     state.chats &&
-    state.chats.length > 0 &&
-    state.currentChatIndex >= 0 &&
-    state.currentChatIndex < state.chats.length
+      state.chats.length > 0 &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
       ? state.chats[state.currentChatIndex].messages
       : []
   );
   const stickyIndex = useStore((state) =>
     state.chats &&
-    state.chats.length > 0 &&
-    state.currentChatIndex >= 0 &&
-    state.currentChatIndex < state.chats.length
+      state.chats.length > 0 &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
       ? state.chats[state.currentChatIndex].messages.length
       : 0
   );
+  const currentChatIndex = useStore((state) => state.currentChatIndex);
   const advancedMode = useStore((state) => state.advancedMode);
   const shareGPTEnabled = useStore((state) => state.shareGPTEnabled);
   const generating = useStore.getState().generating;
@@ -50,7 +52,9 @@ const ChatContent = () => {
 
   const { error } = useSubmit();
 
-  // Custom scroller function to control auto-scroll behavior
+  // Custom scroller: controls auto-scroll for new content (messages/streaming).
+  // Since ScrollToBottom remounts on chat switch (via key), this scroller
+  // is only called for content changes within the same chat.
   const customScroller = ({ maxValue }: { maxValue: number; minValue: number; offsetHeight: number; scrollHeight: number; scrollTop: number }) => {
     return autoScroll ? maxValue : 0;
   };
@@ -58,10 +62,13 @@ const ChatContent = () => {
   return (
     <div className='flex-1 overflow-hidden'>
       <ScrollToBottom
+        key={currentChatIndex}
         className='h-full dark:bg-gray-800'
         followButtonClassName='hidden'
         scroller={customScroller}
+        initialScrollBehavior='auto'
       >
+        <ScrollPositionManager chatIndex={currentChatIndex} />
         <ScrollToBottomButton />
         <div className='flex flex-col items-center text-sm dark:bg-gray-800'>
           <div
@@ -114,11 +121,10 @@ const ChatContent = () => {
             </div>
           )}
           <div
-            className={`mt-4 w-full m-auto  ${
-              hideSideMenu
-                ? 'md:max-w-5xl lg:max-w-5xl xl:max-w-6xl'
-                : 'md:max-w-3xl lg:max-w-3xl xl:max-w-4xl'
-            }`}
+            className={`mt-4 w-full m-auto  ${hideSideMenu
+              ? 'md:max-w-5xl lg:max-w-5xl xl:max-w-6xl'
+              : 'md:max-w-3xl lg:max-w-3xl xl:max-w-4xl'
+              }`}
           >
             {useStore.getState().generating || (
               <div className='md:w-[calc(100%-50px)] flex gap-4 flex-wrap justify-center'>
