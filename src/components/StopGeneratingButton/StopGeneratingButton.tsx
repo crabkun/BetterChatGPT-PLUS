@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import useStore from '@store/store';
 import { useTranslation } from 'react-i18next';
 import { modelStreamSupport } from '@constants/modelLoader';
+import { abortActiveRequest } from '@hooks/useSubmit';
 
 const StopGeneratingButton = () => {
   const { t } = useTranslation();
@@ -13,10 +14,12 @@ const StopGeneratingButton = () => {
   );
   const handleGeneratingStop = () => {
     if (modelStreamSupport[currentModel]) {
+      abortActiveRequest();
       setGenerating(false);
     } else {
       const confirmMessage = t('stopNonStreamGenerationWarning');
       if (window.confirm(confirmMessage)) {
+        abortActiveRequest();
         setGenerating(false);
       }
     }

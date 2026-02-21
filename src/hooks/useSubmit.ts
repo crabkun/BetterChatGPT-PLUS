@@ -14,6 +14,17 @@ import { updateTotalTokenUsed } from '@utils/messageUtils';
 import { _defaultChatConfig } from '@constants/chat';
 import { modelStreamSupport } from '@constants/modelLoader';
 
+// Module-level AbortController so we can cancel in-flight requests
+// when the user stops generation or starts a new request.
+let activeAbortController: AbortController | null = null;
+
+export const abortActiveRequest = () => {
+  if (activeAbortController) {
+    activeAbortController.abort();
+    activeAbortController = null;
+  }
+};
+
 const useSubmit = () => {
   const { t, i18n } = useTranslation('api');
   const error = useStore((state) => state.error);
@@ -138,6 +149,12 @@ const useSubmit = () => {
     setChats(updatedChats);
     setGenerating(true);
 
+    // Abort any previous in-flight request and create a new controller
+    abortActiveRequest();
+    const abortController = new AbortController();
+    activeAbortController = abortController;
+    const signal = abortController.signal;
+
     try {
       const isStreamSupported =
         modelStreamSupport[chats[currentChatIndex].config.model];
@@ -159,6 +176,7 @@ const useSubmit = () => {
         data = await getChatCompletion(
           messages,
           chats[currentChatIndex].config,
+          signal,
         );
 
         if (
@@ -211,6 +229,7 @@ const useSubmit = () => {
         const stream = await getChatCompletionStream(
           messages,
           chats[currentChatIndex].config,
+          signal,
         );
 
         if (stream) {
@@ -429,10 +448,14 @@ const useSubmit = () => {
         }
       }
     } catch (e: unknown) {
-      const err = (e as Error).message;
-      console.log(err);
-      setError(err);
+      const err = (e as Error);
+      // Silently ignore abort errors — these are expected when the user stops generation
+      if (err.name !== 'AbortError') {
+        console.log(err.message);
+        setError(err.message);
+      }
     }
+    activeAbortController = null;
     setGenerating(false);
   };
 

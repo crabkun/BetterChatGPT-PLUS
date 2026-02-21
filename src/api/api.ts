@@ -52,14 +52,15 @@ const resolveProviderConfig = () => {
 export const getChatCompletion = async (
   messages: MessageInterface[],
   config: ConfigInterface,
+  signal?: AbortSignal,
 ) => {
   const { provider, apiKey, baseUrl, vertexConfig } = resolveProviderConfig();
 
   if (provider === 'gemini-aistudio' || provider === 'gemini-vertexai') {
-    return getGeminiChatCompletion(messages, config, apiKey, provider, vertexConfig);
+    return getGeminiChatCompletion(messages, config, apiKey, provider, vertexConfig, signal);
   }
 
-  return getOpenAIChatCompletion(baseUrl, messages, config, apiKey);
+  return getOpenAIChatCompletion(baseUrl, messages, config, apiKey, signal);
 };
 
 /**
@@ -69,14 +70,15 @@ export const getChatCompletion = async (
 export const getChatCompletionStream = async (
   messages: MessageInterface[],
   config: ConfigInterface,
+  signal?: AbortSignal,
 ) => {
   const { provider, apiKey, baseUrl, vertexConfig } = resolveProviderConfig();
 
   if (provider === 'gemini-aistudio' || provider === 'gemini-vertexai') {
-    return getGeminiChatCompletionStream(messages, config, apiKey, provider, vertexConfig);
+    return getGeminiChatCompletionStream(messages, config, apiKey, provider, vertexConfig, signal);
   }
 
-  return getOpenAIChatCompletionStream(baseUrl, messages, config, apiKey);
+  return getOpenAIChatCompletionStream(baseUrl, messages, config, apiKey, signal);
 };
 
 export const submitShareGPT = async (body: ShareGPTSubmitBodyInterface) => {

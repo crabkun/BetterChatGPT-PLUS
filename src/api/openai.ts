@@ -41,6 +41,7 @@ export const getOpenAIChatCompletion = async (
     messages: MessageInterface[],
     config: ConfigInterface,
     apiKey?: string,
+    signal?: AbortSignal,
 ) => {
     const client = new OpenAI({
         apiKey: apiKey || '',
@@ -55,7 +56,7 @@ export const getOpenAIChatCompletion = async (
         messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
         stream: false,
         ...(oSeriesReasoning ? { reasoning_effort: oSeriesReasoning as any } : {}),
-    });
+    }, { signal });
 
     return response;
 };
@@ -69,6 +70,7 @@ export const getOpenAIChatCompletionStream = async (
     messages: MessageInterface[],
     config: ConfigInterface,
     apiKey?: string,
+    signal?: AbortSignal,
 ) => {
     const client = new OpenAI({
         apiKey: apiKey || '',
@@ -83,7 +85,7 @@ export const getOpenAIChatCompletionStream = async (
         messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
         stream: true,
         ...(oSeriesReasoning ? { reasoning_effort: oSeriesReasoning as any } : {}),
-    });
+    }, { signal });
 
     return stream;
 };

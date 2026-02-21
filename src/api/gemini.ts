@@ -128,7 +128,8 @@ export const getGeminiChatCompletion = async (
     config: ConfigInterface,
     apiKey?: string,
     provider: ApiProvider = 'gemini-aistudio',
-    vertexConfig?: GeminiVertexConfig
+    vertexConfig?: GeminiVertexConfig,
+    signal?: AbortSignal,
 ) => {
     const client = createClient(apiKey || '', provider, vertexConfig);
     const { systemInstruction, contents } = convertMessages(messages);
@@ -143,6 +144,7 @@ export const getGeminiChatCompletion = async (
             presencePenalty: config.presence_penalty,
             frequencyPenalty: config.frequency_penalty,
             thinkingConfig: mapThinkingConfig(config.thinking_level, config.model),
+            abortSignal: signal,
         },
     });
 
@@ -188,7 +190,8 @@ export const getGeminiChatCompletionStream = async (
     config: ConfigInterface,
     apiKey?: string,
     provider: ApiProvider = 'gemini-aistudio',
-    vertexConfig?: GeminiVertexConfig
+    vertexConfig?: GeminiVertexConfig,
+    signal?: AbortSignal,
 ) => {
     const client = createClient(apiKey || '', provider, vertexConfig);
     const { systemInstruction, contents } = convertMessages(messages);
@@ -203,6 +206,7 @@ export const getGeminiChatCompletionStream = async (
             presencePenalty: config.presence_penalty,
             frequencyPenalty: config.frequency_penalty,
             thinkingConfig: mapThinkingConfig(config.thinking_level, config.model),
+            abortSignal: signal,
         },
     });
 
