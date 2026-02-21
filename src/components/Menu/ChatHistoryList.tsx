@@ -76,20 +76,20 @@ const ChatHistoryList = () => {
             chatSize: !displayChatSize
               ? undefined
               : chat.messages.reduce(
-                  (prev, current) =>
-                    prev +
-                    current.content.reduce(
-                      (prevInner, currCont) =>
-                        prevInner +
-                        (isTextContent(currCont)
-                          ? currCont.text.length
-                          : isImageContent(currCont)
+                (prev, current) =>
+                  prev +
+                  current.content.reduce(
+                    (prevInner, currCont) =>
+                      prevInner +
+                      (isTextContent(currCont)
+                        ? currCont.text.length
+                        : isImageContent(currCont)
                           ? currCont.image_url.url.length
                           : 0),
-                      0
-                    ),
-                  0
-                ),
+                    0
+                  ),
+                0
+              ),
           });
         } else {
           if (!_folders[chat.folder]) _folders[_chatFolderName] = [];
@@ -100,20 +100,20 @@ const ChatHistoryList = () => {
             chatSize: !displayChatSize
               ? undefined
               : chat.messages.reduce(
-                  (prev, current) =>
-                    prev +
-                    current.content.reduce(
-                      (prevInner, currCont) =>
-                        prevInner +
-                        (isTextContent(currCont)
-                          ? currCont.text.length
-                          : isImageContent(currCont)
+                (prev, current) =>
+                  prev +
+                  current.content.reduce(
+                    (prevInner, currCont) =>
+                      prevInner +
+                      (isTextContent(currCont)
+                        ? currCont.text.length
+                        : isImageContent(currCont)
                           ? currCont.image_url.url.length
                           : 0),
-                      0
-                    ),
-                  0
-                ),
+                    0
+                  ),
+                0
+              ),
           });
         }
       });
@@ -128,7 +128,6 @@ const ChatHistoryList = () => {
 
     const unsubscribe = useStore.subscribe((state) => {
       if (
-        !state.generating &&
         state.chats &&
         state.chats !== chatsRef.current
       ) {
@@ -211,9 +210,8 @@ const ChatHistoryList = () => {
 
   return (
     <div
-      className={`flex-col flex-1 overflow-y-auto hide-scroll-bar border-b border-white/20 ${
-        isHover ? 'bg-gray-800/40' : ''
-      }`}
+      className={`flex-col flex-1 overflow-y-auto hide-scroll-bar border-b border-white/20 ${isHover ? 'bg-gray-800/40' : ''
+        }`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

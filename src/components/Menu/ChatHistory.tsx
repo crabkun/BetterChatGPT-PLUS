@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useInitialiseNewChat from '@hooks/useInitialiseNewChat';
 
 import ChatIcon from '@icon/ChatIcon';
+import SpinnerIcon from '@icon/SpinnerIcon';
 import CrossIcon from '@icon/CrossIcon';
 import DeleteIcon from '@icon/DeleteIcon';
 import EditIcon from '@icon/EditIcon';
@@ -46,7 +47,13 @@ const ChatHistory = React.memo(
     const setCurrentChatIndex = useStore((state) => state.setCurrentChatIndex);
     const setChats = useStore((state) => state.setChats);
     const active = useStore((state) => state.currentChatIndex === chatIndex);
-    const generating = useStore((state) => state.generating);
+    const generatingChatIds = useStore((state) => state.generatingChatIds);
+    const chatId = useStore((state) =>
+      state.chats && chatIndex >= 0 && chatIndex < state.chats.length
+        ? state.chats[chatIndex].id
+        : ''
+    );
+    const isChatGenerating = generatingChatIds.includes(chatId);
 
     const [isDelete, setIsDelete] = useState<boolean>(false);
     const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -164,15 +171,10 @@ const ChatHistory = React.memo(
 
     return (
       <a
-        className={`${
-          active ? ChatHistoryClass.active : ChatHistoryClass.normal
-        } ${
-          generating
-            ? 'cursor-not-allowed opacity-40'
-            : 'cursor-pointer opacity-100'
-        } ${selectedChats.includes(chatIndex) ? 'bg-blue-500' : ''}`}
+        className={`${active ? ChatHistoryClass.active : ChatHistoryClass.normal
+          } cursor-pointer opacity-100 ${selectedChats.includes(chatIndex) ? 'bg-blue-500' : ''}`}
         onClick={() => {
-          if (!generating) setCurrentChatIndex(chatIndex);
+          setCurrentChatIndex(chatIndex);
         }}
         draggable
         onDragStart={handleDragStart}
@@ -181,9 +183,9 @@ const ChatHistory = React.memo(
           type='checkbox'
           checked={selectedChats.includes(chatIndex)}
           onClick={handleCheckboxClick}
-          onChange={() => {}}
+          onChange={() => { }}
         />
-        <ChatIcon />
+        {isChatGenerating ? <SpinnerIcon /> : <ChatIcon />}
         <div
           className='flex-1 text-ellipsis max-h-5 overflow-hidden break-all relative'
           title={`${title}${chatSize ? ` (${formatNumber(chatSize)})` : ''}`}

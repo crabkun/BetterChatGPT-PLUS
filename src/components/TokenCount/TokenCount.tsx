@@ -34,7 +34,16 @@ const tokenCostToCost = (
 const TokenCount = React.memo(() => {
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [imageTokenCount, setImageTokenCount] = useState<number>(0);
-  const generating = useStore((state) => state.generating);
+  const currentChatId = useStore((state) =>
+    state.chats &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
+      ? state.chats[state.currentChatIndex].id
+      : ''
+  );
+  const generating = useStore((state) =>
+    currentChatId ? state.generatingChatIds.includes(currentChatId) : false
+  );
   const messages = useStore(
     (state) =>
       state.chats ? state.chats[state.currentChatIndex].messages : [],

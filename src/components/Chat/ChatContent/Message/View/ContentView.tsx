@@ -78,11 +78,11 @@ const ContentView = memo(
       reasoningContent?.isCompleted ?? reasoningContent?.durationSeconds !== undefined;
     const reasoningTitle = reasoningIsCompleted
       ? (t('reasoning.completed', {
-          seconds: reasoningSeconds,
-        }) as string)
+        seconds: reasoningSeconds,
+      }) as string)
       : (t('reasoning.inProgress', {
-          seconds: reasoningSeconds,
-        }) as string);
+        seconds: reasoningSeconds,
+      }) as string);
 
     const handleDelete = () => {
       const updatedChats: ChatInterface[] = JSON.parse(
@@ -156,8 +156,8 @@ const ContentView = memo(
       setZoomedImage(null);
     };
     const validImageContents = Array.isArray(content)
-    ? (content.slice(1).filter(isImageContent) as ImageContentInterface[])
-    : [];
+      ? (content.slice(1).filter(isImageContent) as ImageContentInterface[])
+      : [];
     return (
       <>
         {reasoningText && (
@@ -270,7 +270,10 @@ const ContentView = memo(
         <div className='flex justify-end gap-2 w-full mt-2'>
           {isDelete || (
             <>
-              {!useStore.getState().generating &&
+              {!(() => {
+                const chat = useStore.getState().chats?.[useStore.getState().currentChatIndex];
+                return chat ? useStore.getState().generatingChatIds.includes(chat.id) : false;
+              })() &&
                 role === 'assistant' &&
                 messageIndex === lastMessageIndex && (
                   <RefreshButton onClick={handleRefresh} />

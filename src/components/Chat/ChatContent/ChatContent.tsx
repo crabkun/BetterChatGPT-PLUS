@@ -37,7 +37,16 @@ const ChatContent = () => {
   const currentChatIndex = useStore((state) => state.currentChatIndex);
   const advancedMode = useStore((state) => state.advancedMode);
   const shareGPTEnabled = useStore((state) => state.shareGPTEnabled);
-  const generating = useStore.getState().generating;
+  const currentChatId = useStore((state) =>
+    state.chats &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
+      ? state.chats[state.currentChatIndex].id
+      : ''
+  );
+  const generating = useStore((state) =>
+    currentChatId ? state.generatingChatIds.includes(currentChatId) : false
+  );
   const hideSideMenu = useStore((state) => state.hideSideMenu);
   const autoScroll = useStore((state) => state.autoScroll);
 
@@ -126,7 +135,7 @@ const ChatContent = () => {
               : 'md:max-w-3xl lg:max-w-3xl xl:max-w-4xl'
               }`}
           >
-            {useStore.getState().generating || (
+            {generating || (
               <div className='md:w-[calc(100%-50px)] flex gap-4 flex-wrap justify-center'>
                 <DownloadChat saveRef={saveRef} />
                 {shareGPTEnabled && <ShareGPT />}

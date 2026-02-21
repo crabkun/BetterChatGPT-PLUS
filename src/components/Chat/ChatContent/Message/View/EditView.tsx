@@ -173,7 +173,9 @@ const EditView = ({
 
     if (
       sticky &&
-      ((!hasTextContent && !hasImageContent) || useStore.getState().generating)
+      ((!hasTextContent && !hasImageContent) || useStore.getState().generatingChatIds.includes(
+        useStore.getState().chats?.[useStore.getState().currentChatIndex]?.id ?? ''
+      ))
     ) {
       return;
     }
@@ -238,7 +240,9 @@ const EditView = ({
       (content) => content.type === 'image_url'
     );
 
-    if (useStore.getState().generating) {
+    if (useStore.getState().generatingChatIds.includes(
+      useStore.getState().chats?.[useStore.getState().currentChatIndex]?.id ?? ''
+    )) {
       return;
     }
 
@@ -356,11 +360,10 @@ const EditView = ({
   return (
     <div className='relative'>
       <div
-        className={`w-full  ${
-          sticky
+        className={`w-full  ${sticky
             ? 'py-2 md:py-3 px-2 md:px-4 border border-black/10 bg-white dark:border-gray-900/50 dark:text-white dark:bg-gray-700 rounded-md shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]'
             : ''
-        }`}
+          }`}
       >
         <div className='relative flex items-start'>
           {modelTypes[model] == 'image' && (
@@ -379,9 +382,8 @@ const EditView = ({
           {/* Place the AttachmentIcon directly over the textarea */}
           <textarea
             ref={textareaRef}
-            className={`m-0 resize-none rounded-lg bg-transparent overflow-y-hidden focus:ring-0 focus-visible:ring-0 leading-7 w-full placeholder:text-gray-500/40 pr-10 ${
-              modelTypes[model] == 'image' ? 'pl-7' : ''
-            }`} // Adjust padding-right to make space for the icon
+            className={`m-0 resize-none rounded-lg bg-transparent overflow-y-hidden focus:ring-0 focus-visible:ring-0 leading-7 w-full placeholder:text-gray-500/40 pr-10 ${modelTypes[model] == 'image' ? 'pl-7' : ''
+              }`} // Adjust padding-right to make space for the icon
             onChange={(e) => {
               _setContent((prev) => [
                 { type: 'text', text: e.target.value },
@@ -460,7 +462,10 @@ const EditViewButtons = memo(
     model: ModelOptions;
   }) => {
     const { t } = useTranslation();
-    const generating = useStore.getState().generating;
+    const currentChat = useStore.getState().chats?.[useStore.getState().currentChatIndex];
+    const generating = currentChat
+      ? useStore.getState().generatingChatIds.includes(currentChat.id)
+      : false;
     const advancedMode = useStore((state) => state.advancedMode);
     const imageItems = _content
       .map((item, index) => ({ item, index }))
@@ -539,9 +544,8 @@ const EditViewButtons = memo(
           <div className='flex-1 text-center mt-2 flex justify-center'>
             {sticky && (
               <button
-                className={`btn relative mr-2 btn-primary ${
-                  generating ? 'cursor-not-allowed opacity-40' : ''
-                }`}
+                className={`btn relative mr-2 btn-primary ${generating ? 'cursor-not-allowed opacity-40' : ''
+                  }`}
                 onClick={handleGenerate}
                 aria-label={t('generate') as string}
               >
@@ -565,13 +569,11 @@ const EditViewButtons = memo(
             )}
 
             <button
-              className={`btn relative mr-2 ${
-                sticky
-                  ? `btn-neutral ${
-                      generating ? 'cursor-not-allowed opacity-40' : ''
-                    }`
+              className={`btn relative mr-2 ${sticky
+                  ? `btn-neutral ${generating ? 'cursor-not-allowed opacity-40' : ''
+                  }`
                   : 'btn-neutral'
-              }`}
+                }`}
               onClick={handleSave}
               aria-label={t('save') as string}
             >

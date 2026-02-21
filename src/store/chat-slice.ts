@@ -10,13 +10,14 @@ export interface ChatSlice {
   messages: MessageInterface[];
   chats?: ChatInterface[];
   currentChatIndex: number;
-  generating: boolean;
+  generatingChatIds: string[];
   error: string;
   folders: FolderCollection;
   setMessages: (messages: MessageInterface[]) => void;
   setChats: (chats: ChatInterface[]) => void;
   setCurrentChatIndex: (currentChatIndex: number) => void;
-  setGenerating: (generating: boolean) => void;
+  addGeneratingChat: (chatId: string) => void;
+  removeGeneratingChat: (chatId: string) => void;
   setError: (error: string) => void;
   setFolders: (folders: FolderCollection) => void;
 }
@@ -25,7 +26,7 @@ export const createChatSlice: StoreSlice<ChatSlice> = (set, get) => {
   return {
     messages: [],
     currentChatIndex: -1,
-    generating: false,
+    generatingChatIds: [],
     error: '',
     folders: {},
     setMessages: (messages: MessageInterface[]) => {
@@ -63,10 +64,18 @@ export const createChatSlice: StoreSlice<ChatSlice> = (set, get) => {
         currentChatIndex: currentChatIndex,
       }));
     },
-    setGenerating: (generating: boolean) => {
+    addGeneratingChat: (chatId: string) => {
       set((prev: ChatSlice) => ({
         ...prev,
-        generating: generating,
+        generatingChatIds: prev.generatingChatIds.includes(chatId)
+          ? prev.generatingChatIds
+          : [...prev.generatingChatIds, chatId],
+      }));
+    },
+    removeGeneratingChat: (chatId: string) => {
+      set((prev: ChatSlice) => ({
+        ...prev,
+        generatingChatIds: prev.generatingChatIds.filter((id) => id !== chatId),
       }));
     },
     setError: (error: string) => {

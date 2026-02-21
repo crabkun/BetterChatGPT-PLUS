@@ -6,13 +6,12 @@ import MenuIcon from '@icon/MenuIcon';
 import useAddChat from '@hooks/useAddChat';
 
 const MobileBar = () => {
-  const generating = useStore((state) => state.generating);
   const setHideSideMenu = useStore((state) => state.setHideSideMenu);
   const chatTitle = useStore((state) =>
     state.chats &&
-    state.chats.length > 0 &&
-    state.currentChatIndex >= 0 &&
-    state.currentChatIndex < state.chats.length
+      state.chats.length > 0 &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
       ? state.chats[state.currentChatIndex].title
       : 'New Chat'
   );
@@ -37,13 +36,9 @@ const MobileBar = () => {
       </h1>
       <button
         type='button'
-        className={`px-3 text-gray-400 transition-opacity ${
-          generating
-            ? 'cursor-not-allowed opacity-40'
-            : 'cursor-pointer opacity-100'
-        }`}
+        className='px-3 text-gray-400 transition-opacity cursor-pointer opacity-100'
         onClick={() => {
-          if (!generating) addChat();
+          addChat();
         }}
         aria-label='new chat'
       >

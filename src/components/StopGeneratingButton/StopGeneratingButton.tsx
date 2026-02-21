@@ -1,31 +1,44 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import useStore from '@store/store';
 import { useTranslation } from 'react-i18next';
 import { modelStreamSupport } from '@constants/modelLoader';
-import { abortActiveRequest } from '@hooks/useSubmit';
+import { abortChatRequest } from '@hooks/useSubmit';
 
 const StopGeneratingButton = () => {
   const { t } = useTranslation();
-  const setGenerating = useStore((state) => state.setGenerating);
-  const generating = useStore((state) => state.generating);
+
+  const currentChatId = useStore((state) =>
+    state.chats &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
+      ? state.chats[state.currentChatIndex].id
+      : ''
+  );
+
+  const isCurrentChatGenerating = useStore((state) =>
+    currentChatId ? state.generatingChatIds.includes(currentChatId) : false
+  );
+
+  const removeGeneratingChat = useStore((state) => state.removeGeneratingChat);
 
   const currentModel = useStore((state) =>
     state.chats ? state.chats[state.currentChatIndex].config.model : ''
   );
+
   const handleGeneratingStop = () => {
     if (modelStreamSupport[currentModel]) {
-      abortActiveRequest();
-      setGenerating(false);
+      abortChatRequest(currentChatId);
+      removeGeneratingChat(currentChatId);
     } else {
       const confirmMessage = t('stopNonStreamGenerationWarning');
       if (window.confirm(confirmMessage)) {
-        abortActiveRequest();
-        setGenerating(false);
+        abortChatRequest(currentChatId);
+        removeGeneratingChat(currentChatId);
       }
     }
   };
 
-  return generating ? (
+  return isCurrentChatGenerating ? (
     <div
       className='absolute bottom-6 left-0 right-0 m-auto flex md:w-full md:m-auto gap-0 md:gap-2 justify-center'
     >

@@ -14,16 +14,17 @@ import { updateTotalTokenUsed } from '@utils/messageUtils';
 import { _defaultChatConfig } from '@constants/chat';
 import { modelStreamSupport } from '@constants/modelLoader';
 
-// Module-level AbortController so we can cancel in-flight requests
-// when the user stops generation or starts a new request.
-let activeAbortController: AbortController | null = null;
+// Per-chat AbortController map so each conversation can be cancelled independently.
+const chatAbortControllers = new Map<string, AbortController>();
 
-export const abortActiveRequest = () => {
-  if (activeAbortController) {
-    activeAbortController.abort();
-    activeAbortController = null;
+export const abortChatRequest = (chatId: string) => {
+  const controller = chatAbortControllers.get(chatId);
+  if (controller) {
+    controller.abort();
+    chatAbortControllers.delete(chatId);
   }
 };
+
 
 const useSubmit = () => {
   const { t, i18n } = useTranslation('api');
@@ -31,8 +32,8 @@ const useSubmit = () => {
   const setError = useStore((state) => state.setError);
   const apiBaseUrl = useStore((state) => state.apiBaseUrl);
   const apiKey = useStore((state) => state.apiKey);
-  const setGenerating = useStore((state) => state.setGenerating);
-  const generating = useStore((state) => state.generating);
+  const addGeneratingChat = useStore((state) => state.addGeneratingChat);
+  const removeGeneratingChat = useStore((state) => state.removeGeneratingChat);
   const currentChatIndex = useStore((state) => state.currentChatIndex);
   const setChats = useStore((state) => state.setChats);
   const THINK_OPEN = '<think>';
@@ -132,11 +133,17 @@ const useSubmit = () => {
 
   const handleSubmit = async () => {
     const chats = useStore.getState().chats;
-    if (generating || !chats) return;
+    // Snapshot currentChatIndex at call time so concurrent calls don't interfere
+    const chatIndex = useStore.getState().currentChatIndex;
+    if (!chats || chatIndex < 0 || chatIndex >= chats.length) return;
+    const chatId = chats[chatIndex].id;
+
+    // Prevent duplicate submission for the same chat
+    if (useStore.getState().generatingChatIds.includes(chatId)) return;
 
     const updatedChats: ChatInterface[] = JSON.parse(JSON.stringify(chats));
 
-    updatedChats[currentChatIndex].messages.push({
+    updatedChats[chatIndex].messages.push({
       role: 'assistant',
       content: [
         {
@@ -147,18 +154,19 @@ const useSubmit = () => {
     });
 
     setChats(updatedChats);
-    setGenerating(true);
+    addGeneratingChat(chatId);
 
-    // Abort any previous in-flight request and create a new controller
-    abortActiveRequest();
+    // Abort any previous in-flight request for this chat and create a new controller
+    abortChatRequest(chatId);
     const abortController = new AbortController();
-    activeAbortController = abortController;
+    chatAbortControllers.set(chatId, abortController);
     const signal = abortController.signal;
+
 
     try {
       const isStreamSupported =
-        modelStreamSupport[chats[currentChatIndex].config.model];
-      const { model } = chats[currentChatIndex].config;
+        modelStreamSupport[chats[chatIndex].config.model];
+      const { model } = chats[chatIndex].config;
       const supportsStream = modelStreamSupport[model];
       console.log('[useSubmit] Model streaming support:', {
         model,
@@ -166,16 +174,16 @@ const useSubmit = () => {
         isStreamSupported
       });
       let data;
-      if (chats[currentChatIndex].messages.length === 0)
+      if (chats[chatIndex].messages.length === 0)
         throw new Error(t('errors.noMessagesSubmitted') as string);
 
       const messages = stripReasoningFromMessages(
-        chats[currentChatIndex].messages
+        chats[chatIndex].messages
       );
       if (!isStreamSupported) {
         data = await getChatCompletion(
           messages,
-          chats[currentChatIndex].config,
+          chats[chatIndex].config,
           signal,
         );
 
@@ -192,7 +200,9 @@ const useSubmit = () => {
         const updatedChats: ChatInterface[] = JSON.parse(
           JSON.stringify(useStore.getState().chats)
         );
-        const updatedMessages = updatedChats[currentChatIndex].messages;
+        const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
+        if (liveIdx === -1) throw new Error('Chat not found');
+        const updatedMessages = updatedChats[liveIdx].messages;
         const latestMessage = updatedMessages[updatedMessages.length - 1];
         const thinkState = { inThink: false, carry: '' };
         const parsed = processThinkChunk(
@@ -228,7 +238,7 @@ const useSubmit = () => {
       } else {
         const stream = await getChatCompletionStream(
           messages,
-          chats[currentChatIndex].config,
+          chats[chatIndex].config,
           signal,
         );
 
@@ -244,7 +254,9 @@ const useSubmit = () => {
             const updatedChats: ChatInterface[] = JSON.parse(
               JSON.stringify(useStore.getState().chats)
             );
-            const updatedMessages = updatedChats[currentChatIndex].messages;
+            const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
+            if (liveIdx === -1) return;
+            const updatedMessages = updatedChats[liveIdx].messages;
             const latestMessage = updatedMessages[updatedMessages.length - 1];
             if (resultStrings.reasoning) {
               let reasoningIndex = latestMessage.content.findIndex((content) =>
@@ -313,7 +325,7 @@ const useSubmit = () => {
 
           // Use the SDK's async iterable stream
           for await (const chunk of stream) {
-            if (!useStore.getState().generating) break;
+            if (!useStore.getState().generatingChatIds.includes(chatId)) break;
 
             const delta = chunk.choices[0]?.delta;
             if (!delta) continue;
@@ -368,20 +380,23 @@ const useSubmit = () => {
             const updatedChats: ChatInterface[] = JSON.parse(
               JSON.stringify(useStore.getState().chats)
             );
-            const updatedMessages = updatedChats[currentChatIndex].messages;
-            const latestMessage = updatedMessages[updatedMessages.length - 1];
-            const reasoningEntry = latestMessage.content.find(
-              (content) => isReasoningContent(content)
-            ) as ReasoningContentInterface | undefined;
-            if (reasoningEntry) {
-              const durationSeconds = Math.max(
-                1,
-                Math.ceil((Date.now() - reasoningStart) / 1000)
-              );
-              reasoningEntry.durationSeconds = durationSeconds;
-              reasoningEntry.isCompleted = true;
-              reasoningEntry.isCollapsed = true;
-              setChats(updatedChats);
+            const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
+            if (liveIdx !== -1) {
+              const updatedMessages = updatedChats[liveIdx].messages;
+              const latestMessage = updatedMessages[updatedMessages.length - 1];
+              const reasoningEntry = latestMessage.content.find(
+                (content) => isReasoningContent(content)
+              ) as ReasoningContentInterface | undefined;
+              if (reasoningEntry) {
+                const durationSeconds = Math.max(
+                  1,
+                  Math.ceil((Date.now() - reasoningStart) / 1000)
+                );
+                reasoningEntry.durationSeconds = durationSeconds;
+                reasoningEntry.isCompleted = true;
+                reasoningEntry.isCollapsed = true;
+                setChats(updatedChats);
+              }
             }
           }
         }
@@ -390,10 +405,11 @@ const useSubmit = () => {
       // update tokens used in chatting
       const currChats = useStore.getState().chats;
       const countTotalTokens = useStore.getState().countTotalTokens;
+      const currIdx = currChats?.findIndex((c) => c.id === chatId) ?? -1;
 
-      if (currChats && countTotalTokens) {
-        const model = currChats[currentChatIndex].config.model;
-        const messages = currChats[currentChatIndex].messages;
+      if (currChats && countTotalTokens && currIdx !== -1) {
+        const model = currChats[currIdx].config.model;
+        const messages = currChats[currIdx].messages;
         updateTotalTokenUsed(
           model,
           messages.slice(0, -1),
@@ -405,13 +421,14 @@ const useSubmit = () => {
       if (
         useStore.getState().autoTitle &&
         currChats &&
-        !currChats[currentChatIndex]?.titleSet
+        currIdx !== -1 &&
+        !currChats[currIdx]?.titleSet
       ) {
-        const messages_length = currChats[currentChatIndex].messages.length;
+        const messages_length = currChats[currIdx].messages.length;
         const assistant_message =
-          currChats[currentChatIndex].messages[messages_length - 1].content;
+          currChats[currIdx].messages[messages_length - 1].content;
         const user_message =
-          currChats[currentChatIndex].messages[messages_length - 2].content;
+          currChats[currIdx].messages[messages_length - 2].content;
 
         const message: MessageInterface = {
           role: 'user',
@@ -428,23 +445,26 @@ const useSubmit = () => {
         const updatedChats: ChatInterface[] = JSON.parse(
           JSON.stringify(useStore.getState().chats)
         );
-        let title = (
-          await generateTitle([message], updatedChats[currentChatIndex].config)
-        ).trim();
-        if (title.startsWith('"') && title.endsWith('"')) {
-          title = title.slice(1, -1);
-        }
-        updatedChats[currentChatIndex].title = title;
-        updatedChats[currentChatIndex].titleSet = true;
-        setChats(updatedChats);
+        const titleIdx = updatedChats.findIndex((c) => c.id === chatId);
+        if (titleIdx !== -1) {
+          let title = (
+            await generateTitle([message], updatedChats[titleIdx].config)
+          ).trim();
+          if (title.startsWith('"') && title.endsWith('"')) {
+            title = title.slice(1, -1);
+          }
+          updatedChats[titleIdx].title = title;
+          updatedChats[titleIdx].titleSet = true;
+          setChats(updatedChats);
 
-        // update tokens used for generating title
-        if (countTotalTokens) {
-          const model = _defaultChatConfig.model;
-          updateTotalTokenUsed(model, [message], {
-            role: 'assistant',
-            content: [{ type: 'text', text: title } as TextContentInterface],
-          });
+          // update tokens used for generating title
+          if (countTotalTokens) {
+            const model = _defaultChatConfig.model;
+            updateTotalTokenUsed(model, [message], {
+              role: 'assistant',
+              content: [{ type: 'text', text: title } as TextContentInterface],
+            });
+          }
         }
       }
     } catch (e: unknown) {
@@ -455,8 +475,8 @@ const useSubmit = () => {
         setError(err.message);
       }
     }
-    activeAbortController = null;
-    setGenerating(false);
+    chatAbortControllers.delete(chatId);
+    removeGeneratingChat(chatId);
   };
 
   return { handleSubmit, error };

@@ -12,7 +12,6 @@ const ChatSearch = ({
   setFilter: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   const [_filter, _setFilter] = useState<string>(filter);
-  const generating = useStore((state) => state.generating);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     _setFilter(e.target.value);
@@ -33,7 +32,6 @@ const ChatSearch = ({
       value={_filter}
       handleChange={handleChange}
       className='h-8 mb-2'
-      disabled={generating}
     />
   );
 };
