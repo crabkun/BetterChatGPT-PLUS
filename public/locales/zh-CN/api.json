@@ -1,5 +1,11 @@
 {
-  "securityMessage": "我们高度优先考虑您的 API 密钥的安全，并非常小心地处理它。您的密钥将专门存储在您的浏览器中，并且永远不会与任何第三方实体共享。它仅用于访问 OpenAI API 的预期用途，而不是用于任何其他未经授权的用途。",
+  "securityMessage": "我们高度优先考虑您的 API 密钥的安全，并非常小心地处理它。您的密钥将专门存储在您的浏览器中，并且永远不会与任何第三方实体共享。它仅用于访问 API 的预期用途，而不是用于任何其他未经授权的用途。",
+  "provider": {
+    "label": "API 平台",
+    "openai": "OpenAI",
+    "geminiAiStudio": "Google Gemini (AI Studio)",
+    "geminiVertexAi": "Google Gemini (Vertex AI)"
+  },
   "apiBaseUrl": {
     "inputLabel": "Base URL",
     "description": "设置 OpenAI 兼容 API 的 Base URL（例如 https://api.openai.com/v1）。使用第三方 Base URL 时，它会作为代理运作，使您能够在受限制的地区访问 API。",
@@ -8,6 +14,13 @@
   "apiKey": {
     "howTo": "在<0>此处</0>获取您的个人 API 密钥。",
     "inputLabel": "API 密钥"
+  },
+  "gemini": {
+    "apiKeyLabel": "Gemini API 密钥",
+    "projectIdLabel": "GCP 项目 ID",
+    "locationLabel": "位置 (Location)",
+    "aiStudioHowTo": "从 <0>Google AI Studio</0> 获取您的 Gemini API 密钥。",
+    "vertexAiHowTo": "从 <0>Google Cloud Console</0> 获取您的 API 密钥。"
   },
   "apiVersion": {
     "inputLabel": "API 版本",

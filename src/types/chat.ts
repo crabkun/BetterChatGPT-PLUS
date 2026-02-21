@@ -75,12 +75,15 @@ export interface ChatInterface {
   imageDetail: ImageDetail;
 }
 
+export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+
 export interface ConfigInterface {
   model: ModelOptions;
   temperature: number;
   presence_penalty: number;
   top_p: number;
   frequency_penalty: number;
+  thinking_level: ThinkingLevel;
 }
 
 export interface ChatHistoryInterface {

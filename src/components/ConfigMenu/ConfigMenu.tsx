@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PopupModal from '@components/PopupModal';
-import { ConfigInterface, ImageDetail } from '@type/chat';
+import { ConfigInterface, ImageDetail, ThinkingLevel } from '@type/chat';
 import Select from 'react-select';
 import { modelOptions } from '@constants/modelLoader';
 import { ModelOptions } from '@utils/modelReader';
@@ -30,6 +30,7 @@ const ConfigMenu = ({
     config.frequency_penalty
   );
   const [_imageDetail, _setImageDetail] = useState<ImageDetail>(imageDetail);
+  const [_thinkingLevel, _setThinkingLevel] = useState<ThinkingLevel>(config.thinking_level);
   const { t } = useTranslation('model');
 
   const handleConfirm = () => {
@@ -39,6 +40,7 @@ const ConfigMenu = ({
       presence_penalty: _presencePenalty,
       top_p: _topP,
       frequency_penalty: _frequencyPenalty,
+      thinking_level: _thinkingLevel,
     });
     setImageDetail(_imageDetail);
     setIsModalOpen(false);
@@ -73,6 +75,10 @@ const ConfigMenu = ({
         <ImageDetailSelector
           _imageDetail={_imageDetail}
           _setImageDetail={_setImageDetail}
+        />
+        <ThinkingLevelSelector
+          _thinkingLevel={_thinkingLevel}
+          _setThinkingLevel={_setThinkingLevel}
         />
       </div>
     </PopupModal>
@@ -148,8 +154,8 @@ export const ModelSelector = ({
       <Select
         value={{
           value: _model,
-          label: customModels.some(m => m.id === _model) 
-            ? `${customModels.find(m => m.id === _model)?.name} ${t('customModels.customLabel', { ns: 'model' })}` 
+          label: customModels.some(m => m.id === _model)
+            ? `${customModels.find(m => m.id === _model)?.name} ${t('customModels.customLabel', { ns: 'model' })}`
             : _model,
         }}
         onChange={(selectedOption) =>
@@ -360,6 +366,77 @@ export const ImageDetailSelector = ({
         classNamePrefix='select'
         styles={customStyles}
       />
+    </div>
+  );
+};
+export const ThinkingLevelSelector = ({
+  _thinkingLevel,
+  _setThinkingLevel,
+}: {
+  _thinkingLevel: ThinkingLevel;
+  _setThinkingLevel: React.Dispatch<React.SetStateAction<ThinkingLevel>>;
+}) => {
+  const { t } = useTranslation('model');
+
+  const thinkingLevelOptions = [
+    { value: 'minimal', label: t('thinkingLevel.minimal') },
+    { value: 'low', label: t('thinkingLevel.low') },
+    { value: 'medium', label: t('thinkingLevel.medium') },
+    { value: 'high', label: t('thinkingLevel.high') },
+  ];
+
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      backgroundColor: '#2D3748',
+      color: '#E2E8F0',
+    }),
+    menu: (provided: any) => ({
+      ...provided,
+      backgroundColor: '#2D3748',
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      'backgroundColor': state.isSelected ? '#4A5568' : '#2D3748',
+      'color': '#E2E8F0',
+      '&:hover': {
+        backgroundColor: '#4A5568',
+      },
+    }),
+    singleValue: (provided: any) => ({
+      ...provided,
+      color: '#E2E8F0',
+    }),
+    input: (provided: any) => ({
+      ...provided,
+      color: '#E2E8F0',
+    }),
+    placeholder: (provided: any) => ({
+      ...provided,
+      color: '#A0AEC0',
+    }),
+  };
+
+  return (
+    <div className='mt-5 pt-5 border-t border-gray-500'>
+      <label className='block text-sm font-medium text-gray-900 dark:text-white'>
+        {t('thinkingLevel.label')}
+      </label>
+      <Select
+        value={thinkingLevelOptions.find(
+          (option) => option.value === _thinkingLevel
+        )}
+        onChange={(selectedOption) =>
+          _setThinkingLevel(selectedOption?.value as ThinkingLevel)
+        }
+        options={thinkingLevelOptions}
+        className='basic-single'
+        classNamePrefix='select'
+        styles={customStyles}
+      />
+      <div className='min-w-fit text-gray-500 dark:text-gray-300 text-sm mt-2'>
+        {t('thinkingLevel.description')}
+      </div>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import {
   ModelSelector,
   PresencePenaltySlider,
   TemperatureSlider,
+  ThinkingLevelSelector,
   TopPSlider,
 } from '@components/ConfigMenu/ConfigMenu';
 
@@ -19,7 +20,7 @@ import {
   _defaultSystemMessage,
 } from '@constants/chat';
 import { ModelOptions } from '@utils/modelReader';
-import { ImageDetail } from '@type/chat';
+import { ImageDetail, ThinkingLevel } from '@type/chat';
 
 const ChatConfigMenu = () => {
   const { t } = useTranslation('model');
@@ -67,6 +68,9 @@ const ChatConfigPopup = ({
   const [_imageDetail, _setImageDetail] = useState<ImageDetail>(
     useStore.getState().defaultImageDetail
   );
+  const [_thinkingLevel, _setThinkingLevel] = useState<ThinkingLevel>(
+    config.thinking_level
+  );
 
   const { t } = useTranslation('model');
 
@@ -77,6 +81,7 @@ const ChatConfigPopup = ({
       top_p: _topP,
       presence_penalty: _presencePenalty,
       frequency_penalty: _frequencyPenalty,
+      thinking_level: _thinkingLevel,
     });
     setDefaultSystemMessage(_systemMessage);
     setDefaultImageDetail(_imageDetail);
@@ -89,6 +94,7 @@ const ChatConfigPopup = ({
     _setTopP(_defaultChatConfig.top_p);
     _setPresencePenalty(_defaultChatConfig.presence_penalty);
     _setFrequencyPenalty(_defaultChatConfig.frequency_penalty);
+    _setThinkingLevel(_defaultChatConfig.thinking_level);
     _setImageDetail(_defaultImageDetail);
     _setSystemMessage(_defaultSystemMessage);
     _setImageDetail(_defaultImageDetail);
@@ -127,7 +133,11 @@ const ChatConfigPopup = ({
           _imageDetail={_imageDetail}
           _setImageDetail={_setImageDetail}
         />
-        
+        <ThinkingLevelSelector
+          _thinkingLevel={_thinkingLevel}
+          _setThinkingLevel={_setThinkingLevel}
+        />
+
         <div
           className='btn btn-neutral cursor-pointer mt-5'
           onClick={handleReset}

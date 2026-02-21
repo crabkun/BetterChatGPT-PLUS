@@ -31,6 +31,7 @@ export const _defaultChatConfig: ConfigInterface = {
   presence_penalty: 0,
   top_p: 1,
   frequency_penalty: 0,
+  thinking_level: 'high',
 };
 
 export const generateDefaultChat = (
@@ -42,18 +43,18 @@ export const generateDefaultChat = (
   messages:
     useStore.getState().defaultSystemMessage.length > 0
       ? [
-          {
-            role: 'system',
-            content: [
-              {
-                type: 'text',
-                text: useStore.getState().defaultSystemMessage,
-              } as TextContentInterface,
-            ],
-          },
-        ]
+        {
+          role: 'system',
+          content: [
+            {
+              type: 'text',
+              text: useStore.getState().defaultSystemMessage,
+            } as TextContentInterface,
+          ],
+        },
+      ]
       : [],
-  config: { ...useStore.getState().defaultChatConfig },
+  config: { ..._defaultChatConfig, ...useStore.getState().defaultChatConfig },
   titleSet: false,
   folder,
   imageDetail: useStore.getState().defaultImageDetail,

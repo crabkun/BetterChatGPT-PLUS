@@ -28,6 +28,14 @@
     "high": "high",
     "auto": "auto"
   },
+  "thinkingLevel": {
+    "label": "Thinking Level",
+    "description": "Controls how much reasoning effort the model uses. 'minimal' uses little to no thinking, 'high' enables maximum reasoning depth. (Default: high)",
+    "minimal": "Minimal",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
   "customModels": {
     "title": "Custom Models",
     "addModel": "Add Model",

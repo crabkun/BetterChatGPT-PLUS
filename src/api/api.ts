@@ -1,50 +1,82 @@
-import OpenAI from 'openai';
 import { ShareGPTSubmitBodyInterface } from '@type/api';
 import {
   ConfigInterface,
   MessageInterface,
 } from '@type/chat';
+import useStore from '@store/store';
 
-export const getChatCompletion = async (
-  baseUrl: string,
-  messages: MessageInterface[],
-  config: ConfigInterface,
-  apiKey?: string,
-) => {
-  const client = new OpenAI({
-    apiKey: apiKey || '',
-    baseURL: baseUrl.trim() || undefined,
-    dangerouslyAllowBrowser: true,
-  });
+import { getOpenAIChatCompletion, getOpenAIChatCompletionStream } from './openai';
+import { getGeminiChatCompletion, getGeminiChatCompletionStream } from './gemini';
 
-  const response = await client.chat.completions.create({
-    ...config,
-    messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-    stream: false,
-  });
+/**
+ * Resolve the effective API key and provider-specific config from the store.
+ * This encapsulates all provider-aware logic so callers don't need to know about it.
+ */
+const resolveProviderConfig = () => {
+  const state = useStore.getState();
+  const provider = state.apiProvider;
 
-  return response;
+  if (provider === 'gemini-aistudio') {
+    return {
+      provider,
+      apiKey: state.geminiApiKey,
+      baseUrl: '',
+      vertexConfig: undefined,
+    } as const;
+  }
+
+  if (provider === 'gemini-vertexai') {
+    return {
+      provider,
+      apiKey: state.geminiApiKey,
+      baseUrl: '',
+      vertexConfig: {
+        projectId: state.geminiVertexProjectId,
+        location: state.geminiVertexLocation,
+      },
+    } as const;
+  }
+
+  return {
+    provider: 'openai' as const,
+    apiKey: state.apiKey,
+    baseUrl: state.apiBaseUrl,
+    vertexConfig: undefined,
+  };
 };
 
-export const getChatCompletionStream = async (
-  baseUrl: string,
+/**
+ * Unified non-streaming chat completion.
+ * Reads provider config from the store internally — callers only pass messages + config.
+ */
+export const getChatCompletion = async (
   messages: MessageInterface[],
   config: ConfigInterface,
-  apiKey?: string,
 ) => {
-  const client = new OpenAI({
-    apiKey: apiKey || '',
-    baseURL: baseUrl.trim() || undefined,
-    dangerouslyAllowBrowser: true,
-  });
+  const { provider, apiKey, baseUrl, vertexConfig } = resolveProviderConfig();
 
-  const stream = await client.chat.completions.create({
-    ...config,
-    messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-    stream: true,
-  });
+  if (provider === 'gemini-aistudio' || provider === 'gemini-vertexai') {
+    return getGeminiChatCompletion(messages, config, apiKey, provider, vertexConfig);
+  }
 
-  return stream;
+  return getOpenAIChatCompletion(baseUrl, messages, config, apiKey);
+};
+
+/**
+ * Unified streaming chat completion.
+ * Reads provider config from the store internally — callers only pass messages + config.
+ */
+export const getChatCompletionStream = async (
+  messages: MessageInterface[],
+  config: ConfigInterface,
+) => {
+  const { provider, apiKey, baseUrl, vertexConfig } = resolveProviderConfig();
+
+  if (provider === 'gemini-aistudio' || provider === 'gemini-vertexai') {
+    return getGeminiChatCompletionStream(messages, config, apiKey, provider, vertexConfig);
+  }
+
+  return getOpenAIChatCompletionStream(baseUrl, messages, config, apiKey);
 };
 
 export const submitShareGPT = async (body: ShareGPTSubmitBodyInterface) => {

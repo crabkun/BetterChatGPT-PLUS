@@ -12,9 +12,9 @@ const ChatTitle = React.memo(() => {
   const chat = useStore(
     (state) =>
       state.chats &&
-      state.chats.length > 0 &&
-      state.currentChatIndex >= 0 &&
-      state.currentChatIndex < state.chats.length
+        state.chats.length > 0 &&
+        state.currentChatIndex >= 0 &&
+        state.currentChatIndex < state.chats.length
         ? state.chats[state.currentChatIndex]
         : undefined,
     shallow
@@ -83,6 +83,9 @@ const ChatTitle = React.memo(() => {
         </div>
         <div className='text-center p-1 rounded-md bg-gray-300/20 dark:bg-gray-900/10 hover:bg-gray-300/50 dark:hover:bg-gray-900/50'>
           {t('imageDetail.label')}: {chat.imageDetail}
+        </div>
+        <div className='text-center p-1 rounded-md bg-gray-300/20 dark:bg-gray-900/10 hover:bg-gray-300/50 dark:hover:bg-gray-900/50'>
+          {t('thinkingLevel.label')}: {chat.config.thinking_level}
         </div>
       </div>
       {isModalOpen && (

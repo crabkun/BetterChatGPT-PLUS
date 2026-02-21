@@ -1,5 +1,11 @@
 {
-  "securityMessage": "We prioritise the security of your API key and handle it with utmost care. Your key is exclusively stored on your browser and never shared with any third-party entity. It is solely used for the intended purpose of accessing the OpenAI API and not for any other unauthorised use.",
+  "securityMessage": "We prioritise the security of your API key and handle it with utmost care. Your key is exclusively stored on your browser and never shared with any third-party entity. It is solely used for the intended purpose of accessing the API and not for any other unauthorised use.",
+  "provider": {
+    "label": "API Provider",
+    "openai": "OpenAI",
+    "geminiAiStudio": "Google Gemini (AI Studio)",
+    "geminiVertexAi": "Google Gemini (Vertex AI)"
+  },
   "apiBaseUrl": {
     "inputLabel": "Base URL",
     "description": "Set the Base URL of the OpenAI-compatible API (e.g. https://api.openai.com/v1). When you use a third-party Base URL, it functions as a proxy, enabling you to access the API in regions where it might otherwise be restricted.",
@@ -8,6 +14,13 @@
   "apiKey": {
     "howTo": "Get your personal API key <0>here</0>.",
     "inputLabel": "API Key"
+  },
+  "gemini": {
+    "apiKeyLabel": "Gemini API Key",
+    "projectIdLabel": "GCP Project ID",
+    "locationLabel": "Location",
+    "aiStudioHowTo": "Get your Gemini API key from <0>Google AI Studio</0>.",
+    "vertexAiHowTo": "Get your API key from <0>Google Cloud Console</0>."
   },
   "apiVersion": {
     "inputLabel": "Api Version",

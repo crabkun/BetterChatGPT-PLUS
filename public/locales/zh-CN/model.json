@@ -32,6 +32,14 @@
     "high": "高",
     "auto": "自动"
   },
+  "thinkingLevel": {
+    "label": "思考等级",
+    "description": "控制模型使用的推理深度。'最小' 表示几乎不使用思考，'高' 表示使用最大推理深度。（默认：高）",
+    "minimal": "最小",
+    "low": "低",
+    "medium": "中",
+    "high": "高"
+  },
   "customModels": {
     "title": "自定义模型",
     "addModel": "添加模型",

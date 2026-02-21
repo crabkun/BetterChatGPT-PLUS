@@ -108,10 +108,8 @@ const useSubmit = () => {
         model: useStore.getState().titleModel ?? (apiKey ? modelConfig : _defaultChatConfig).model,
       };
       data = await getChatCompletion(
-        useStore.getState().apiBaseUrl,
         message,
         titleChatConfig,
-        apiKey || undefined,
       );
     } catch (error: unknown) {
       throw new Error(
@@ -159,10 +157,8 @@ const useSubmit = () => {
       );
       if (!isStreamSupported) {
         data = await getChatCompletion(
-          useStore.getState().apiBaseUrl,
           messages,
           chats[currentChatIndex].config,
-          apiKey || undefined,
         );
 
         if (
@@ -187,7 +183,9 @@ const useSubmit = () => {
         );
         const flushParsed = flushThinkState(thinkState);
         const finalContent = parsed.content + flushParsed.content;
-        const finalReasoning = parsed.reasoning + flushParsed.reasoning;
+        // Merge think-tag reasoning with native reasoning_content (e.g. Gemini thinking)
+        const nativeReasoning = (data.choices[0].message as any).reasoning_content || '';
+        const finalReasoning = nativeReasoning + parsed.reasoning + flushParsed.reasoning;
         (
           latestMessage.content[0] as TextContentInterface
         ).text += finalContent;
@@ -211,10 +209,8 @@ const useSubmit = () => {
         setChats(updatedChats);
       } else {
         const stream = await getChatCompletionStream(
-          useStore.getState().apiBaseUrl,
           messages,
           chats[currentChatIndex].config,
-          apiKey || undefined,
         );
 
         if (stream) {

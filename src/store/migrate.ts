@@ -27,7 +27,7 @@ import {
 } from '@constants/chat';
 import defaultPrompts from '@constants/prompt';
 
-export const LATEST_PERSIST_VERSION = 10;
+export const LATEST_PERSIST_VERSION = 11;
 
 export const ensureChatIds = (chats?: ChatInterface[]) => {
   if (!chats?.length) return chats;
@@ -156,6 +156,32 @@ export const migrateV9 = (persistedState: any) => {
   }
 };
 
+export const migrateV10 = (persistedState: any) => {
+  if (!persistedState.apiProvider) {
+    persistedState.apiProvider = 'openai';
+  }
+  if (persistedState.geminiApiKey === undefined) {
+    persistedState.geminiApiKey = '';
+  }
+  if (persistedState.geminiVertexProjectId === undefined) {
+    persistedState.geminiVertexProjectId = '';
+  }
+  if (persistedState.geminiVertexLocation === undefined) {
+    persistedState.geminiVertexLocation = 'us-central1';
+  }
+  // Backfill thinking_level on all existing chat configs
+  if (persistedState.chats) {
+    for (const chat of persistedState.chats) {
+      if (chat.config && !chat.config.thinking_level) {
+        chat.config.thinking_level = 'high';
+      }
+    }
+  }
+  if (persistedState.defaultChatConfig && !persistedState.defaultChatConfig.thinking_level) {
+    persistedState.defaultChatConfig.thinking_level = 'high';
+  }
+};
+
 export const applyMigrations = (persistedState: unknown, version: number) => {
   switch (version) {
     case 0:
@@ -182,6 +208,8 @@ export const applyMigrations = (persistedState: unknown, version: number) => {
       migrateV8_2(persistedState as LocalStorageInterfaceV8_2ToV9);
     case 9:
       migrateV9(persistedState);
+    case 10:
+      migrateV10(persistedState);
       break;
   }
   return persistedState;
