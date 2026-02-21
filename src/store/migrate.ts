@@ -27,7 +27,7 @@ import {
 } from '@constants/chat';
 import defaultPrompts from '@constants/prompt';
 
-export const LATEST_PERSIST_VERSION = 9;
+export const LATEST_PERSIST_VERSION = 10;
 
 export const ensureChatIds = (chats?: ChatInterface[]) => {
   if (!chats?.length) return chats;
@@ -149,6 +149,13 @@ export const migrateV8_2 = (persistedState: LocalStorageInterfaceV8_2ToV9) => {
   });
 };
 
+export const migrateV9 = (persistedState: any) => {
+  if ('apiEndpoint' in persistedState) {
+    persistedState.apiBaseUrl = persistedState.apiEndpoint;
+    delete persistedState.apiEndpoint;
+  }
+};
+
 export const applyMigrations = (persistedState: unknown, version: number) => {
   switch (version) {
     case 0:
@@ -173,6 +180,8 @@ export const applyMigrations = (persistedState: unknown, version: number) => {
       migrateV8_1_fix(persistedState as LocalStorageInterfaceV8_1ToV8_2);
     case 8.2:
       migrateV8_2(persistedState as LocalStorageInterfaceV8_2ToV9);
+    case 9:
+      migrateV9(persistedState);
       break;
   }
   return persistedState;

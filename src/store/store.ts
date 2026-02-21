@@ -44,7 +44,7 @@ export const createPartializedState = (
   currentChatIndex: state.currentChatIndex,
   apiKey: state.apiKey,
   apiKeyConfigured: state.apiKeyConfigured,
-  apiEndpoint: state.apiEndpoint,
+  apiBaseUrl: state.apiBaseUrl,
   theme: state.theme,
   autoTitle: state.autoTitle,
   advancedMode: state.advancedMode,

@@ -10,7 +10,6 @@ import {
   isReasoningContent,
 } from '@type/chat';
 import { getChatCompletion, getChatCompletionStream } from '@api/api';
-import { parseEventSource } from '@api/helper';
 import { updateTotalTokenUsed } from '@utils/messageUtils';
 import { _defaultChatConfig } from '@constants/chat';
 import { modelStreamSupport } from '@constants/modelLoader';
@@ -19,7 +18,7 @@ const useSubmit = () => {
   const { t, i18n } = useTranslation('api');
   const error = useStore((state) => state.error);
   const setError = useStore((state) => state.setError);
-  const apiEndpoint = useStore((state) => state.apiEndpoint);
+  const apiBaseUrl = useStore((state) => state.apiBaseUrl);
   const apiKey = useStore((state) => state.apiKey);
   const setGenerating = useStore((state) => state.setGenerating);
   const generating = useStore((state) => state.generating);
@@ -109,7 +108,7 @@ const useSubmit = () => {
         model: useStore.getState().titleModel ?? (apiKey ? modelConfig : _defaultChatConfig).model,
       };
       data = await getChatCompletion(
-        useStore.getState().apiEndpoint,
+        useStore.getState().apiBaseUrl,
         message,
         titleChatConfig,
         apiKey || undefined,
@@ -119,7 +118,7 @@ const useSubmit = () => {
         `${t('errors.errorGeneratingTitle')}\n${(error as Error).message}`
       );
     }
-    return data.choices[0].message.content;
+    return data.choices[0].message.content || '';
   };
 
   const handleSubmit = async () => {
@@ -152,7 +151,6 @@ const useSubmit = () => {
         isStreamSupported
       });
       let data;
-      let stream;
       if (chats[currentChatIndex].messages.length === 0)
         throw new Error(t('errors.noMessagesSubmitted') as string);
 
@@ -161,7 +159,7 @@ const useSubmit = () => {
       );
       if (!isStreamSupported) {
         data = await getChatCompletion(
-          useStore.getState().apiEndpoint,
+          useStore.getState().apiBaseUrl,
           messages,
           chats[currentChatIndex].config,
           apiKey || undefined,
@@ -212,19 +210,14 @@ const useSubmit = () => {
         }
         setChats(updatedChats);
       } else {
-        stream = await getChatCompletionStream(
-          useStore.getState().apiEndpoint,
+        const stream = await getChatCompletionStream(
+          useStore.getState().apiBaseUrl,
           messages,
           chats[currentChatIndex].config,
           apiKey || undefined,
         );
 
         if (stream) {
-          if (stream.locked)
-            throw new Error(t('errors.streamLocked') as string);
-          const reader = stream.getReader();
-          let reading = true;
-          let partial = '';
           let reasoningStart: number | null = null;
           let reasoningCompleted = false;
           const thinkState = { inThink: false, carry: '' };
@@ -302,59 +295,48 @@ const useSubmit = () => {
             }
             setChats(updatedChats);
           };
-          while (reading && useStore.getState().generating) {
-            const { done, value } = await reader.read();
-            const result = parseEventSource(
-              partial + new TextDecoder().decode(value)
-            );
-            partial = '';
 
-            if (result === '[DONE]' || done) {
-              reading = false;
-            } else {
-              const resultStrings = result.reduce(
-                (
-                  output: { content: string; reasoning: string; hasContent: boolean },
-                  curr
-                ) => {
-                  if (typeof curr === 'string') {
-                    partial += curr;
-                  } else {
-                    if (!curr.choices || !curr.choices[0] || !curr.choices[0].delta) {
-                      // cover the case where we get some element which doesnt have text data, e.g. usage stats
-                      return output;
-                    }
-                    const content = curr.choices[0]?.delta?.content ?? null;
-                    const reasoningContent =
-                      curr.choices[0]?.delta?.reasoning_content ?? null;
-                    if (reasoningContent) {
-                      output.reasoning += reasoningContent;
-                      if (!reasoningStart) {
-                        reasoningStart = Date.now();
-                      }
-                    }
-                    if (content) {
-                      const parsed = processThinkChunk(content, thinkState);
-                      if (parsed.reasoning) {
-                        output.reasoning += parsed.reasoning;
-                        if (!reasoningStart) {
-                          reasoningStart = Date.now();
-                        }
-                      }
-                      if (parsed.content) {
-                        output.content += parsed.content;
-                        output.hasContent = true;
-                      }
-                    }
-                  }
-                  return output;
-                },
-                { content: '', reasoning: '', hasContent: false }
-              );
+          // Use the SDK's async iterable stream
+          for await (const chunk of stream) {
+            if (!useStore.getState().generating) break;
 
+            const delta = chunk.choices[0]?.delta;
+            if (!delta) continue;
+
+            const contentText = delta.content ?? null;
+            const reasoningContent = (delta as any).reasoning_content ?? null;
+
+            const resultStrings = {
+              content: '',
+              reasoning: '',
+              hasContent: false,
+            };
+
+            if (reasoningContent) {
+              resultStrings.reasoning += reasoningContent;
+              if (!reasoningStart) {
+                reasoningStart = Date.now();
+              }
+            }
+            if (contentText) {
+              const parsed = processThinkChunk(contentText, thinkState);
+              if (parsed.reasoning) {
+                resultStrings.reasoning += parsed.reasoning;
+                if (!reasoningStart) {
+                  reasoningStart = Date.now();
+                }
+              }
+              if (parsed.content) {
+                resultStrings.content += parsed.content;
+                resultStrings.hasContent = true;
+              }
+            }
+
+            if (resultStrings.content || resultStrings.reasoning) {
               applyStreamResultStrings(resultStrings);
             }
           }
+
           const flushed = flushThinkState(thinkState);
           if (flushed.reasoning || flushed.content) {
             if (flushed.reasoning && !reasoningStart) {
@@ -366,13 +348,7 @@ const useSubmit = () => {
               hasContent: Boolean(flushed.content),
             });
           }
-          if (useStore.getState().generating) {
-            reader.cancel(t('errors.cancelledByUser') as string);
-          } else {
-            reader.cancel(t('errors.generationCompleted') as string);
-          }
-          reader.releaseLock();
-          stream.cancel();
+
           if (reasoningStart && !reasoningCompleted) {
             const updatedChats: ChatInterface[] = JSON.parse(
               JSON.stringify(useStore.getState().chats)

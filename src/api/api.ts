@@ -1,90 +1,49 @@
+import OpenAI from 'openai';
 import { ShareGPTSubmitBodyInterface } from '@type/api';
 import {
   ConfigInterface,
   MessageInterface,
 } from '@type/chat';
-import { ModelOptions } from '@utils/modelReader';
 
 export const getChatCompletion = async (
-  endpoint: string,
+  baseUrl: string,
   messages: MessageInterface[],
   config: ConfigInterface,
   apiKey?: string,
-  customHeaders?: Record<string, string>,
 ) => {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...customHeaders,
-  };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
-  endpoint = endpoint.trim();
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      messages,
-      ...config,
-    }),
+  const client = new OpenAI({
+    apiKey: apiKey || '',
+    baseURL: baseUrl.trim() || undefined,
+    dangerouslyAllowBrowser: true,
   });
-  if (!response.ok) throw new Error(await response.text());
 
-  const data = await response.json();
-  return data;
+  const response = await client.chat.completions.create({
+    ...config,
+    messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    stream: false,
+  });
+
+  return response;
 };
 
 export const getChatCompletionStream = async (
-  endpoint: string,
+  baseUrl: string,
   messages: MessageInterface[],
   config: ConfigInterface,
   apiKey?: string,
-  customHeaders?: Record<string, string>,
 ) => {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...customHeaders,
-  };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
-  endpoint = endpoint.trim();
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      messages,
-      ...config,
-      stream: true,
-    }),
+  const client = new OpenAI({
+    apiKey: apiKey || '',
+    baseURL: baseUrl.trim() || undefined,
+    dangerouslyAllowBrowser: true,
   });
-  if (response.status === 404 || response.status === 405) {
-    const text = await response.text();
 
-    if (text.includes('model_not_found')) {
-      throw new Error(
-        text +
-        '\nMessage from Better ChatGPT:\nPlease ensure that you have access to the GPT-4 API!'
-      );
-    } else {
-      throw new Error(
-        'Message from Better ChatGPT:\nInvalid API endpoint! We recommend you to check your API endpoint.'
-      );
-    }
-  }
+  const stream = await client.chat.completions.create({
+    ...config,
+    messages: messages as unknown as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    stream: true,
+  });
 
-  if (response.status === 429 || !response.ok) {
-    const text = await response.text();
-    let error = text;
-    if (text.includes('insufficient_quota')) {
-      error +=
-        '\nMessage from Better ChatGPT:\nWe recommend changing your API endpoint or API key';
-    } else if (response.status === 429) {
-      error += '\nRate limited!';
-    }
-    throw new Error(error);
-  }
-
-  const stream = response.body;
   return stream;
 };
 

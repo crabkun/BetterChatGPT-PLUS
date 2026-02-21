@@ -4,7 +4,7 @@ import useStore from '@store/store';
 
 import PopupModal from '@components/PopupModal';
 
-import { defaultAPIEndpoint } from '@constants/auth';
+import { defaultAPIBaseUrl } from '@constants/auth';
 
 const ApiMenu = ({
   setIsModalOpen,
@@ -15,15 +15,15 @@ const ApiMenu = ({
 
   const apiKey = useStore((state) => state.apiKey);
   const setApiKey = useStore((state) => state.setApiKey);
-  const apiEndpoint = useStore((state) => state.apiEndpoint);
-  const setApiEndpoint = useStore((state) => state.setApiEndpoint);
+  const apiBaseUrl = useStore((state) => state.apiBaseUrl);
+  const setApiBaseUrl = useStore((state) => state.setApiBaseUrl);
 
   const [_apiKey, _setApiKey] = useState<string>(apiKey || '');
-  const [_apiEndpoint, _setApiEndpoint] = useState<string>(apiEndpoint);
+  const [_apiBaseUrl, _setApiBaseUrl] = useState<string>(apiBaseUrl);
 
   const handleSave = () => {
     setApiKey(_apiKey);
-    setApiEndpoint(_apiEndpoint);
+    setApiBaseUrl(_apiBaseUrl);
     setIsModalOpen(false);
   };
 
@@ -36,14 +36,14 @@ const ApiMenu = ({
       <div className='p-6 border-b border-gray-200 dark:border-gray-600'>
         <div className='flex gap-2 items-center mb-6'>
           <div className='min-w-fit text-gray-900 dark:text-gray-300 text-sm'>
-            {t('apiEndpoint.inputLabel', { ns: 'api' })}
+            {t('apiBaseUrl.inputLabel', { ns: 'api' })}
           </div>
           <input
             type='text'
             className='text-gray-800 dark:text-white p-3 text-sm border-none bg-gray-200 dark:bg-gray-600 rounded-md m-0 w-full mr-0 h-8 focus:outline-none'
-            value={_apiEndpoint}
+            value={_apiBaseUrl}
             onChange={(e) => {
-              _setApiEndpoint(e.target.value);
+              _setApiBaseUrl(e.target.value);
             }}
           />
         </div>
@@ -79,9 +79,9 @@ const ApiMenu = ({
 
           <p>{t('securityMessage', { ns: 'api' })}</p>
 
-          <p>{t('apiEndpoint.description', { ns: 'api' })}</p>
+          <p>{t('apiBaseUrl.description', { ns: 'api' })}</p>
 
-          <p>{t('apiEndpoint.warn', { ns: 'api' })}</p>
+          <p>{t('apiBaseUrl.warn', { ns: 'api' })}</p>
         </div>
       </div>
     </PopupModal>

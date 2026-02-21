@@ -1,9 +1,9 @@
 {
   "securityMessage": "Vi prioriterar säkerheten för din API-nyckel och hanterar den med största omsorg. Din nyckel lagras uteslutande på din webbläsare och delas aldrig med någon tredje part. Den används enbart för det avsedda ändamålet att få tillgång till OpenAI API och inte för någon annan obehörig användning.",
-  "apiEndpoint": {
-    "inputLabel": "API-slutpunkt",
-    "description": "När du väljer en inofficiell API-slutpunkt fungerar den som en proxy. En proxy fungerar genom att agera som mellanhand mellan din enhet och destinationsservern, i det här fallet OpenAI API. Genom att göra detta kan du få tillgång till OpenAI API i regioner där det annars kan vara begränsat.",
-    "warn": "Dessutom, om du anger en anpassad API-slutpunkt som ger gratis åtkomst till OpenAI API, kan du använda ChatGPT utan att behöva ange en API-nyckel genom att helt enkelt lämna API-nyckelfältet tomt. Det är dock viktigt att vara försiktig när du använder tredjeparts API-slutpunkter, eftersom opålitliga sådana kan logga din personliga information i konversationerna. Verifiera alltid tillförlitligheten hos en API-slutpunkt innan du använder den för att skydda din integritet och säkerhet."
+  "apiBaseUrl": {
+    "inputLabel": "Base URL",
+    "description": "Ange Base URL för det OpenAI-kompatibla API:et (t.ex. https://api.openai.com/v1). När du använder en tredjeparts Base URL fungerar den som en proxy och gör det möjligt att komma åt API:et i regioner där det annars kan vara begränsat.",
+    "warn": "Om du anger en anpassad Base URL som ger gratis åtkomst till OpenAI API kan du använda ChatGPT utan API-nyckel genom att lämna fältet tomt. Var dock försiktig med tredjepartstjänster, eftersom opålitliga sådana kan logga din personliga information. Verifiera alltid tillförlitligheten hos en Base URL innan du använder den."
   },
   "apiKey": {
     "howTo": "Få din personliga API-nyckel <0>här</0>.",
