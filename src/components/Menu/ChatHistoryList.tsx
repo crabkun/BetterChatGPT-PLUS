@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import useStore from '@store/store';
 import { shallow } from 'zustand/shallow';
 
@@ -123,6 +123,15 @@ const ChatHistoryList = () => {
     setNoChatFolders(_noFolders);
   }).current;
 
+  const debouncedUpdateFolders = useCallback(() => {
+    if ((debouncedUpdateFolders as any)._timer) {
+      clearTimeout((debouncedUpdateFolders as any)._timer);
+    }
+    (debouncedUpdateFolders as any)._timer = setTimeout(() => {
+      updateFolders();
+    }, 300);
+  }, [updateFolders]);
+
   useEffect(() => {
     updateFolders();
 
@@ -131,7 +140,7 @@ const ChatHistoryList = () => {
         state.chats &&
         state.chats !== chatsRef.current
       ) {
-        updateFolders();
+        debouncedUpdateFolders();
         chatsRef.current = state.chats;
       } else if (state.folders !== foldersRef.current) {
         updateFolders();
@@ -139,6 +148,9 @@ const ChatHistoryList = () => {
       }
     });
     return () => {
+      if ((debouncedUpdateFolders as any)._timer) {
+        clearTimeout((debouncedUpdateFolders as any)._timer);
+      }
       unsubscribe();
     };
   }, []);
@@ -184,11 +196,14 @@ const ChatHistoryList = () => {
       setIsHover(false);
 
       const chatIndices = JSON.parse(e.dataTransfer.getData('chatIndices'));
-      const updatedChats: ChatInterface[] = JSON.parse(
-        JSON.stringify(useStore.getState().chats)
-      );
-      chatIndices.forEach((chatIndex: number) => {
-        delete updatedChats[chatIndex].folder;
+      const currentChats = useStore.getState().chats;
+      if (!currentChats) return;
+      const updatedChats = currentChats.map((chat, index) => {
+        if (chatIndices.includes(index)) {
+          const { folder, ...rest } = chat;
+          return rest;
+        }
+        return chat;
       });
       setChats(updatedChats);
       setSelectedChats([]);

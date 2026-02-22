@@ -22,7 +22,11 @@ const StopGeneratingButton = () => {
   const removeGeneratingChat = useStore((state) => state.removeGeneratingChat);
 
   const currentModel = useStore((state) =>
-    state.chats ? state.chats[state.currentChatIndex].config.model : ''
+    state.chats &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
+      ? state.chats[state.currentChatIndex].config.model
+      : ''
   );
 
   const handleGeneratingStop = () => {

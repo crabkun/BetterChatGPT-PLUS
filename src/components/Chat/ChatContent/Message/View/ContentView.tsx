@@ -65,7 +65,11 @@ const ContentView = memo(
     const currentChatIndex = useStore((state) => state.currentChatIndex);
     const setChats = useStore((state) => state.setChats);
     const lastMessageIndex = useStore((state) =>
-      state.chats ? state.chats[state.currentChatIndex].messages.length - 1 : 0
+      state.chats &&
+        state.currentChatIndex >= 0 &&
+        state.currentChatIndex < state.chats.length
+        ? state.chats[state.currentChatIndex].messages.length - 1
+        : 0
     );
     const inlineLatex = useStore((state) => state.inlineLatex);
     const markdownMode = useStore((state) => state.markdownMode);
@@ -84,19 +88,26 @@ const ContentView = memo(
         seconds: reasoningSeconds,
       }) as string);
 
+    const isGenerating = useStore((state) => {
+      const chat = state.chats?.[state.currentChatIndex];
+      return chat ? state.generatingChatIds.includes(chat.id) : false;
+    });
+
     const handleDelete = () => {
-      const updatedChats: ChatInterface[] = JSON.parse(
-        JSON.stringify(useStore.getState().chats)
+      const currentChats = useStore.getState().chats;
+      if (!currentChats) return;
+      const updatedMessages = [...currentChats[currentChatIndex].messages];
+      updatedMessages.splice(messageIndex, 1);
+      const updatedChats = currentChats.map((c, i) =>
+        i === currentChatIndex ? { ...c, messages: updatedMessages } : c
       );
-      updatedChats[currentChatIndex].messages.splice(messageIndex, 1);
       setChats(updatedChats);
     };
 
     const handleMove = (direction: 'up' | 'down') => {
-      const updatedChats: ChatInterface[] = JSON.parse(
-        JSON.stringify(useStore.getState().chats)
-      );
-      const updatedMessages = updatedChats[currentChatIndex].messages;
+      const currentChats = useStore.getState().chats;
+      if (!currentChats) return;
+      const updatedMessages = [...currentChats[currentChatIndex].messages];
       const temp = updatedMessages[messageIndex];
       if (direction === 'up') {
         updatedMessages[messageIndex] = updatedMessages[messageIndex - 1];
@@ -105,6 +116,9 @@ const ContentView = memo(
         updatedMessages[messageIndex] = updatedMessages[messageIndex + 1];
         updatedMessages[messageIndex + 1] = temp;
       }
+      const updatedChats = currentChats.map((c, i) =>
+        i === currentChatIndex ? { ...c, messages: updatedMessages } : c
+      );
       setChats(updatedChats);
     };
 
@@ -117,11 +131,13 @@ const ContentView = memo(
     };
 
     const handleRefresh = () => {
-      const updatedChats: ChatInterface[] = JSON.parse(
-        JSON.stringify(useStore.getState().chats)
-      );
-      const updatedMessages = updatedChats[currentChatIndex].messages;
+      const currentChats = useStore.getState().chats;
+      if (!currentChats) return;
+      const updatedMessages = [...currentChats[currentChatIndex].messages];
       updatedMessages.splice(updatedMessages.length - 1, 1);
+      const updatedChats = currentChats.map((c, i) =>
+        i === currentChatIndex ? { ...c, messages: updatedMessages } : c
+      );
       setChats(updatedChats);
       handleSubmit();
     };
@@ -129,16 +145,22 @@ const ContentView = memo(
       event: React.SyntheticEvent<HTMLDetailsElement>
     ) => {
       const isOpen = (event.currentTarget as HTMLDetailsElement).open;
-      const updatedChats: ChatInterface[] = JSON.parse(
-        JSON.stringify(useStore.getState().chats)
-      );
-      const updatedMessage =
-        updatedChats[currentChatIndex].messages[messageIndex];
-      const reasoningEntry = updatedMessage.content.find(isReasoningContent) as
+      const currentChats = useStore.getState().chats;
+      if (!currentChats) return;
+      const msg = currentChats[currentChatIndex].messages[messageIndex];
+      const reasoningEntry = msg.content.find(isReasoningContent) as
         | ReasoningContentInterface
         | undefined;
       if (reasoningEntry) {
-        reasoningEntry.isCollapsed = !isOpen;
+        const updatedContent = msg.content.map((c) =>
+          isReasoningContent(c) ? { ...c, isCollapsed: !isOpen } : c
+        );
+        const updatedMessages = currentChats[currentChatIndex].messages.map((m, mi) =>
+          mi === messageIndex ? { ...m, content: updatedContent } : m
+        );
+        const updatedChats = currentChats.map((c, i) =>
+          i === currentChatIndex ? { ...c, messages: updatedMessages } : c
+        );
         setChats(updatedChats);
       }
     };
@@ -270,10 +292,7 @@ const ContentView = memo(
         <div className='flex justify-end gap-2 w-full mt-2'>
           {isDelete || (
             <>
-              {!(() => {
-                const chat = useStore.getState().chats?.[useStore.getState().currentChatIndex];
-                return chat ? useStore.getState().generatingChatIds.includes(chat.id) : false;
-              })() &&
+              {!isGenerating &&
                 role === 'assistant' &&
                 messageIndex === lastMessageIndex && (
                   <RefreshButton onClick={handleRefresh} />

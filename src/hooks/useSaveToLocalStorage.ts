@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import useStore from '@store/store';
-import { persistChatMessagesNow } from '@store/storage/IndexedDbStorage';
+import { queuePersistChatMessages } from '@store/storage/IndexedDbStorage';
 
 const useSaveToLocalStorage = () => {
   const chatsRef = useRef(useStore.getState().chats);
@@ -10,7 +10,7 @@ const useSaveToLocalStorage = () => {
       if (chatsRef && chatsRef.current !== state.chats) {
         chatsRef.current = state.chats;
         if (state.chats) {
-          void persistChatMessagesNow(state.chats);
+          queuePersistChatMessages(state.chats);
         }
       }
     });

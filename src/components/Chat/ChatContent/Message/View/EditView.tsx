@@ -106,10 +106,8 @@ const EditView = ({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const updatedChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
-    );
-    const chat = updatedChats[safeChatIndex];
+    const chat = useStore.getState().chats?.[safeChatIndex];
+    if (!chat) return;
     const files = e.target.files!;
     const newImageURLs = Array.from(files).map((file: Blob) =>
       URL.createObjectURL(file)
@@ -133,10 +131,8 @@ const EditView = ({
 
   const handleImageUrlChange = () => {
     if (imageUrl.trim() === '') return;
-    const updatedChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
-    );
-    const chat = updatedChats[safeChatIndex];
+    const chat = useStore.getState().chats?.[safeChatIndex];
+    if (!chat) return;
     const newImage: ImageContentInterface = {
       type: 'image_url',
       image_url: {
@@ -179,11 +175,9 @@ const EditView = ({
     ) {
       return;
     }
-    const originalChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
-    );
+    const originalChats = useStore.getState().chats;
     const updatedChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
+      JSON.stringify(originalChats)
     );
     const updatedMessages = updatedChats[safeChatIndex].messages;
 
@@ -204,7 +198,7 @@ const EditView = ({
       setChats(updatedChats);
     } catch (error: unknown) {
       if ((error as DOMException).name === 'QuotaExceededError') {
-        setChats(originalChats);
+        if (originalChats) setChats(originalChats);
         toast.error(
           t('notifications.quotaExceeded', {
             ns: 'import',
@@ -246,11 +240,9 @@ const EditView = ({
       return;
     }
 
-    const originalChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
-    );
+    const originalChats = useStore.getState().chats;
     const updatedChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
+      JSON.stringify(originalChats)
     );
     const updatedMessages = updatedChats[safeChatIndex].messages;
 
@@ -277,7 +269,7 @@ const EditView = ({
       setChats(updatedChats);
     } catch (error: unknown) {
       if ((error as DOMException).name === 'QuotaExceededError') {
-        setChats(originalChats);
+        if (originalChats) setChats(originalChats);
         toast.error(
           t('notifications.quotaExceeded', {
             ns: 'import',
@@ -315,10 +307,8 @@ const EditView = ({
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
-    const updatedChats: ChatInterface[] = JSON.parse(
-      JSON.stringify(useStore.getState().chats)
-    );
-    const chat = updatedChats[safeChatIndex];
+    const chat = useStore.getState().chats?.[safeChatIndex];
+    if (!chat) return;
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         const blob = item.getAsFile();
@@ -361,8 +351,8 @@ const EditView = ({
     <div className='relative'>
       <div
         className={`w-full  ${sticky
-            ? 'py-2 md:py-3 px-2 md:px-4 border border-black/10 bg-white dark:border-gray-900/50 dark:text-white dark:bg-gray-700 rounded-md shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]'
-            : ''
+          ? 'py-2 md:py-3 px-2 md:px-4 border border-black/10 bg-white dark:border-gray-900/50 dark:text-white dark:bg-gray-700 rounded-md shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]'
+          : ''
           }`}
       >
         <div className='relative flex items-start'>
@@ -462,10 +452,10 @@ const EditViewButtons = memo(
     model: ModelOptions;
   }) => {
     const { t } = useTranslation();
-    const currentChat = useStore.getState().chats?.[useStore.getState().currentChatIndex];
-    const generating = currentChat
-      ? useStore.getState().generatingChatIds.includes(currentChat.id)
-      : false;
+    const generating = useStore((state) => {
+      const chat = state.chats?.[state.currentChatIndex];
+      return chat ? state.generatingChatIds.includes(chat.id) : false;
+    });
     const advancedMode = useStore((state) => state.advancedMode);
     const imageItems = _content
       .map((item, index) => ({ item, index }))
@@ -570,9 +560,9 @@ const EditViewButtons = memo(
 
             <button
               className={`btn relative mr-2 ${sticky
-                  ? `btn-neutral ${generating ? 'cursor-not-allowed opacity-40' : ''
-                  }`
-                  : 'btn-neutral'
+                ? `btn-neutral ${generating ? 'cursor-not-allowed opacity-40' : ''
+                }`
+                : 'btn-neutral'
                 }`}
               onClick={handleSave}
               aria-label={t('save') as string}

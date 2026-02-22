@@ -46,12 +46,18 @@ const TokenCount = React.memo(() => {
   );
   const messages = useStore(
     (state) =>
-      state.chats ? state.chats[state.currentChatIndex].messages : [],
+      state.chats &&
+        state.currentChatIndex >= 0 &&
+        state.currentChatIndex < state.chats.length
+        ? state.chats[state.currentChatIndex].messages
+        : [],
     shallow
   );
 
   const model = useStore((state) =>
-    state.chats
+    state.chats &&
+      state.currentChatIndex >= 0 &&
+      state.currentChatIndex < state.chats.length
       ? state.chats[state.currentChatIndex].config.model
       : 'gpt-3.5-turbo'
   );

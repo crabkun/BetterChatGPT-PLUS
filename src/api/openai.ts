@@ -33,6 +33,27 @@ const stripConfig = (config: ConfigInterface) => {
     return rest;
 };
 
+// Cache OpenAI client instances by (apiKey, baseUrl) to avoid re-creating per call
+let _cachedClient: OpenAI | null = null;
+let _cachedKey = '';
+let _cachedBase = '';
+
+const getOrCreateClient = (apiKey: string | undefined, baseUrl: string): OpenAI => {
+    const key = apiKey || '';
+    const base = baseUrl.trim() || '';
+    if (_cachedClient && _cachedKey === key && _cachedBase === base) {
+        return _cachedClient;
+    }
+    _cachedClient = new OpenAI({
+        apiKey: key,
+        baseURL: base || undefined,
+        dangerouslyAllowBrowser: true,
+    });
+    _cachedKey = key;
+    _cachedBase = base;
+    return _cachedClient;
+};
+
 /**
  * Non-streaming OpenAI chat completion.
  */
@@ -43,11 +64,7 @@ export const getOpenAIChatCompletion = async (
     apiKey?: string,
     signal?: AbortSignal,
 ) => {
-    const client = new OpenAI({
-        apiKey: apiKey || '',
-        baseURL: baseUrl.trim() || undefined,
-        dangerouslyAllowBrowser: true,
-    });
+    const client = getOrCreateClient(apiKey, baseUrl);
 
     const oSeriesReasoning = getOpenAIReasoningEffort(config);
 
@@ -72,11 +89,7 @@ export const getOpenAIChatCompletionStream = async (
     apiKey?: string,
     signal?: AbortSignal,
 ) => {
-    const client = new OpenAI({
-        apiKey: apiKey || '',
-        baseURL: baseUrl.trim() || undefined,
-        dangerouslyAllowBrowser: true,
-    });
+    const client = getOrCreateClient(apiKey, baseUrl);
 
     const oSeriesReasoning = getOpenAIReasoningEffort(config);
 
