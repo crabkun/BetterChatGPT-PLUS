@@ -197,12 +197,15 @@ const useSubmit = () => {
           throw new Error(t('errors.failedToRetrieveData') as string);
         }
 
-        const updatedChats: ChatInterface[] = JSON.parse(
-          JSON.stringify(useStore.getState().chats)
-        );
-        const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
+        const currentChats = useStore.getState().chats;
+        if (!currentChats) throw new Error('Chat not found');
+        const liveIdx = currentChats.findIndex((c) => c.id === chatId);
         if (liveIdx === -1) throw new Error('Chat not found');
-        const updatedMessages = updatedChats[liveIdx].messages;
+        const updatedMessages = [...currentChats[liveIdx].messages];
+        updatedMessages[updatedMessages.length - 1] = {
+          ...updatedMessages[updatedMessages.length - 1],
+          content: [...updatedMessages[updatedMessages.length - 1].content],
+        };
         const latestMessage = updatedMessages[updatedMessages.length - 1];
         const thinkState = { inThink: false, carry: '' };
         const parsed = processThinkChunk(
@@ -234,6 +237,9 @@ const useSubmit = () => {
           }
           latestMessage.content = nextContent;
         }
+        const updatedChats = currentChats.map((c, i) =>
+          i === liveIdx ? { ...c, messages: updatedMessages } : c
+        );
         setChats(updatedChats);
       } else {
         const stream = await getChatCompletionStream(
@@ -251,12 +257,15 @@ const useSubmit = () => {
             reasoning: string;
             hasContent: boolean;
           }) => {
-            const updatedChats: ChatInterface[] = JSON.parse(
-              JSON.stringify(useStore.getState().chats)
-            );
-            const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
+            const currentChats = useStore.getState().chats;
+            if (!currentChats) return;
+            const liveIdx = currentChats.findIndex((c) => c.id === chatId);
             if (liveIdx === -1) return;
-            const updatedMessages = updatedChats[liveIdx].messages;
+            const updatedMessages = [...currentChats[liveIdx].messages];
+            updatedMessages[updatedMessages.length - 1] = {
+              ...updatedMessages[updatedMessages.length - 1],
+              content: [...updatedMessages[updatedMessages.length - 1].content],
+            };
             const latestMessage = updatedMessages[updatedMessages.length - 1];
             if (resultStrings.reasoning) {
               let reasoningIndex = latestMessage.content.findIndex((content) =>
@@ -320,6 +329,9 @@ const useSubmit = () => {
                 latestMessage.content[0] as TextContentInterface
               ).text += resultStrings.content;
             }
+            const updatedChats = currentChats.map((c, i) =>
+              i === liveIdx ? { ...c, messages: updatedMessages } : c
+            );
             setChats(updatedChats);
           };
 
@@ -377,12 +389,14 @@ const useSubmit = () => {
           }
 
           if (reasoningStart && !reasoningCompleted) {
-            const updatedChats: ChatInterface[] = JSON.parse(
-              JSON.stringify(useStore.getState().chats)
-            );
-            const liveIdx = updatedChats.findIndex((c) => c.id === chatId);
-            if (liveIdx !== -1) {
-              const updatedMessages = updatedChats[liveIdx].messages;
+            const currentChats2 = useStore.getState().chats;
+            const liveIdx2 = currentChats2?.findIndex((c) => c.id === chatId) ?? -1;
+            if (liveIdx2 !== -1 && currentChats2) {
+              const updatedMessages = [...currentChats2[liveIdx2].messages];
+              updatedMessages[updatedMessages.length - 1] = {
+                ...updatedMessages[updatedMessages.length - 1],
+                content: [...updatedMessages[updatedMessages.length - 1].content],
+              };
               const latestMessage = updatedMessages[updatedMessages.length - 1];
               const reasoningEntry = latestMessage.content.find(
                 (content) => isReasoningContent(content)
@@ -395,7 +409,10 @@ const useSubmit = () => {
                 reasoningEntry.durationSeconds = durationSeconds;
                 reasoningEntry.isCompleted = true;
                 reasoningEntry.isCollapsed = true;
-                setChats(updatedChats);
+                const updatedChats2 = currentChats2.map((c, i) =>
+                  i === liveIdx2 ? { ...c, messages: updatedMessages } : c
+                );
+                setChats(updatedChats2);
               }
             }
           }
@@ -442,20 +459,19 @@ const useSubmit = () => {
           ],
         };
 
-        const updatedChats: ChatInterface[] = JSON.parse(
-          JSON.stringify(useStore.getState().chats)
-        );
-        const titleIdx = updatedChats.findIndex((c) => c.id === chatId);
-        if (titleIdx !== -1) {
+        const titleChats = useStore.getState().chats;
+        const titleIdx = titleChats?.findIndex((c) => c.id === chatId) ?? -1;
+        if (titleIdx !== -1 && titleChats) {
           let title = (
-            await generateTitle([message], updatedChats[titleIdx].config)
+            await generateTitle([message], titleChats[titleIdx].config)
           ).trim();
           if (title.startsWith('"') && title.endsWith('"')) {
             title = title.slice(1, -1);
           }
-          updatedChats[titleIdx].title = title;
-          updatedChats[titleIdx].titleSet = true;
-          setChats(updatedChats);
+          const updatedTitleChats = titleChats.map((c, i) =>
+            i === titleIdx ? { ...c, title, titleSet: true } : c
+          );
+          setChats(updatedTitleChats);
 
           // update tokens used for generating title
           if (countTotalTokens) {
