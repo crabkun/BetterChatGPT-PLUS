@@ -109,6 +109,18 @@ export const requestAccessToken = (clientId: string): Promise<string> => {
 /*  Gzip compression helpers (browser-native)                          */
 /* ------------------------------------------------------------------ */
 
+// Type declarations for Compression Streams API (not yet in all TS DOM libs)
+declare class CompressionStream {
+    constructor(format: 'gzip' | 'deflate' | 'deflate-raw');
+    readonly readable: ReadableStream<Uint8Array>;
+    readonly writable: WritableStream<Uint8Array>;
+}
+declare class DecompressionStream {
+    constructor(format: 'gzip' | 'deflate' | 'deflate-raw');
+    readonly readable: ReadableStream<Uint8Array>;
+    readonly writable: WritableStream<Uint8Array>;
+}
+
 /**
  * Compress a string into a gzip Uint8Array using the browser-native
  * CompressionStream API.
