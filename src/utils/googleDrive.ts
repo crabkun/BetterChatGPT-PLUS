@@ -8,7 +8,7 @@
  */
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-const SYNC_FILENAME = 'betterchatgpt-sync.json';
+const SYNC_FILENAME = 'betterchatgpt-sync.json.gz';
 const DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
 const DRIVE_UPLOAD_URL =
     'https://www.googleapis.com/upload/drive/v3/files';
@@ -106,6 +106,32 @@ export const requestAccessToken = (clientId: string): Promise<string> => {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Gzip compression helpers (browser-native)                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Compress a string into a gzip Uint8Array using the browser-native
+ * CompressionStream API.
+ */
+const gzipCompress = async (input: string): Promise<ArrayBuffer> => {
+    const blob = new Blob([input]);
+    const cs = new CompressionStream('gzip');
+    const stream = blob.stream().pipeThrough(cs);
+    return new Response(stream).arrayBuffer();
+};
+
+/**
+ * Decompress a gzip ArrayBuffer back to a string using the browser-native
+ * DecompressionStream API.
+ */
+const gzipDecompress = async (input: ArrayBuffer): Promise<string> => {
+    const blob = new Blob([input]);
+    const ds = new DecompressionStream('gzip');
+    const stream = blob.stream().pipeThrough(ds);
+    return new Response(stream).text();
+};
+
+/* ------------------------------------------------------------------ */
 /*  Drive helpers                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -136,7 +162,8 @@ const findSyncFile = async (token: string): Promise<string | null> => {
 /* ------------------------------------------------------------------ */
 
 /**
- * Upload (create or update) the sync JSON to Google Drive.
+ * Upload (create or update) the sync data to Google Drive.
+ * The JSON is gzip-compressed before uploading.
  * @param clientId — user-provided Google OAuth Client ID
  * @param data — the JSON data to upload
  */
@@ -148,7 +175,7 @@ export const uploadToGoogleDrive = async (
     const token = await requestAccessToken(clientId);
 
     const existingId = await findSyncFile(token);
-    const jsonBody = JSON.stringify(data);
+    const compressed = await gzipCompress(JSON.stringify(data));
 
     if (existingId) {
         // PATCH – update existing file content
@@ -158,28 +185,42 @@ export const uploadToGoogleDrive = async (
                 method: 'PATCH',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/gzip',
                 },
-                body: jsonBody,
+                body: compressed,
             }
         );
         if (!res.ok) throw new Error(`Drive update failed: ${res.status}`);
     } else {
-        // Multipart create – metadata + content
+        // Multipart create – metadata + binary content
         const metadata = {
             name: SYNC_FILENAME,
             parents: ['appDataFolder'],
         };
 
+        const metadataPart = JSON.stringify(metadata);
         const boundary = '----betterchatgpt_boundary';
-        const body =
+
+        // Build multipart body with binary gzip content
+        const encoder = new TextEncoder();
+        const header =
             `--${boundary}\r\n` +
             `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
-            `${JSON.stringify(metadata)}\r\n` +
+            `${metadataPart}\r\n` +
             `--${boundary}\r\n` +
-            `Content-Type: application/json\r\n\r\n` +
-            `${jsonBody}\r\n` +
-            `--${boundary}--`;
+            `Content-Type: application/gzip\r\n\r\n`;
+        const footer = `\r\n--${boundary}--`;
+
+        const headerBytes = encoder.encode(header);
+        const footerBytes = encoder.encode(footer);
+        const compressedBytes = new Uint8Array(compressed);
+
+        const body = new Uint8Array(
+            headerBytes.length + compressedBytes.length + footerBytes.length
+        );
+        body.set(headerBytes, 0);
+        body.set(compressedBytes, headerBytes.length);
+        body.set(footerBytes, headerBytes.length + compressedBytes.length);
 
         const res = await fetch(
             `${DRIVE_UPLOAD_URL}?uploadType=multipart`,
@@ -189,7 +230,7 @@ export const uploadToGoogleDrive = async (
                     Authorization: `Bearer ${token}`,
                     'Content-Type': `multipart/related; boundary=${boundary}`,
                 },
-                body,
+                body: body.buffer as ArrayBuffer,
             }
         );
         if (!res.ok) throw new Error(`Drive create failed: ${res.status}`);
@@ -197,7 +238,7 @@ export const uploadToGoogleDrive = async (
 };
 
 /**
- * Download the sync JSON from Google Drive.
+ * Download the sync data from Google Drive and decompress it.
  * Returns `null` when no sync file exists yet.
  * @param clientId — user-provided Google OAuth Client ID
  */
@@ -215,7 +256,10 @@ export const downloadFromGoogleDrive = async (
     });
 
     if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
-    return res.json();
+
+    const buf = await res.arrayBuffer();
+    const jsonStr = await gzipDecompress(buf);
+    return JSON.parse(jsonStr);
 };
 
 /* ------------------------------------------------------------------ */
