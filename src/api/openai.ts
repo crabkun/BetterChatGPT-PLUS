@@ -29,8 +29,12 @@ const getOpenAIReasoningEffort = (config: ConfigInterface): string | undefined =
  * Strip non-OpenAI fields from config before passing to SDK.
  */
 const stripConfig = (config: ConfigInterface) => {
-    const { thinking_level, ...rest } = config;
-    return rest;
+    const { thinking_level, presence_penalty, frequency_penalty, ...rest } = config;
+    return {
+        ...rest,
+        ...(presence_penalty ? { presence_penalty } : {}),
+        ...(frequency_penalty ? { frequency_penalty } : {}),
+    };
 };
 
 // Cache OpenAI client instances by (apiKey, baseUrl) to avoid re-creating per call
